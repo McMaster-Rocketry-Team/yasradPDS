@@ -1,0 +1,1 @@
+# holds atmosphere math and standards + real world coordinates for weather fetching
