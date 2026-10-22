@@ -17,11 +17,12 @@ class Geometry(ABC):
     # per-geometry interface goes here: one @abstractmethod for each thing
     # a system needs to ask any geometry
 
+    @property
     @abstractmethod
     def area(self) -> float:
         """Canopy area in m^2."""
         pass
-    
+
 
 # don't touch
 _REGISTRY: dict[str, type[Geometry]] = {}
@@ -32,10 +33,10 @@ def register(name: str):
         return cls
     return decorator
 
-def new_geometry(geometry_type: str, **kwargs) -> Geometry:
+def new_geometry(geometry_type: str) -> Geometry:
     cls = _REGISTRY.get(geometry_type)
     if cls is None:
         raise ValueError(
             f"unknown geometry type {geometry_type!r}; known: {sorted(_REGISTRY)}"
         )
-    return cls(**kwargs)
+    return cls()

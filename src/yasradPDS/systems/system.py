@@ -26,7 +26,7 @@ class Stage():
     max_epsilon: float # shroud line % elongation at break
     porosity: float
 
-    #  unknowns
+    # unknowns
     main_diameter: float | None = None # m
     spill_hole_diameter: float | None = None # m
     area: float | None = None # m^2
