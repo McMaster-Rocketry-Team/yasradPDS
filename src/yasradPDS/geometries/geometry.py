@@ -3,7 +3,6 @@
 # can import their geometry-specific constants from defaults.py, 
 # any universal constants may be imported here from constants.py
 
-
 from abc import ABC, abstractmethod
 
 # interface

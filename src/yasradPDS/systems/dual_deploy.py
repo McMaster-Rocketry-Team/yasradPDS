@@ -4,7 +4,7 @@
 # system data
  
 from system import System, Stage, register
-from geometries.geometry import Geometry
+from geometries.geometry import Geometry, new_geometry
 
 @register("dual_deploy")
 class DualDeploySystem(System):
@@ -15,3 +15,5 @@ class DualDeploySystem(System):
 
         drogue = self._stage_list[0]
         main = self._stage_list[1]
+
+        # Code goes here, add extra helper methods as needed
