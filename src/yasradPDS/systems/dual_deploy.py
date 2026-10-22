@@ -2,16 +2,14 @@
 # canopy/shroud line dimensioning is handled here upon init
 # passed as an arg to all exports/analyses as source of truth for
 # system data
+ 
+from system import System, Stage, register
+from geometries.geometry import Geometry
 
-from dataclasses import dataclass
+@register("dual_deploy")
+class DualDeploySystem(System):
+    _stages = {"drogue": Stage, "main": Stage} # Ordered stages, must be defined
 
-@dataclass
-class Main:
-
-
-@dataclass
-class Drogue:
-
-
-class DualDeploySystem:
-    
+    def _solve(self) -> None:
+        """Solves for unknowns upon initialization"""
+        pass
