@@ -12,4 +12,6 @@ class DualDeploySystem(System):
 
     def _solve(self) -> None:
         """Solves for unknowns upon initialization"""
-        pass
+
+        drogue = self._stage_list[0]
+        main = self._stage_list[1]
