@@ -21,12 +21,5 @@ class DualDeploySystem(System):
 
     def _solve(self) -> None:
         """Solves for unknowns upon initialization"""
-
-        # Check to ensure that both stages report the same total mass
-        if not math.isclose(self._drogue.total_mass, self._main.total_mass):
-            raise ValueError(
-                f"total mass differs between stages: "
-                f"{self._drogue.total_mass} vs {self._main.total_mass} kg"
-            )
         
         # Code goes here, add extra helper methods as needed

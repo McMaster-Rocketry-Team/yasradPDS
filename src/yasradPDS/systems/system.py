@@ -3,13 +3,11 @@
 # one place so that exports and analyses can be performed by
 # passing just a single system object
 
+from math import isclose
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields
 from typing import Any, ClassVar
 
-
-class InvalidStageError(Exception):
-    pass
 
 class UnknownValueError(Exception):
     pass
@@ -117,6 +115,12 @@ class System(ABC):
             stage_cls(name=name, **stage_info[name])
             for name, stage_cls in self._stages.items()
         ]
+        for a, b in zip(self._stage_list, self._stage_list[1:]):
+            if not isclose(a.total_mass, b.total_mass):
+                raise ValueError(
+                    f"total mass differs between {a.name!r} and {b.name!r}: "
+                    f"{a.total_mass} vs {b.total_mass} kg"
+                )
         self._solve()
 
     @property
@@ -129,16 +133,18 @@ class System(ABC):
         Value of any field on any stage. Raises if the value is still unknown.
         
         Stage is an int representing the deployment stage in order of occurrence
-        (i.e. 0 = drogue, 1 = main). Throws InvalidStageError if out of bounds.
+        (i.e. 0 = drogue, 1 = main). Throws IndexError if out of bounds.
         """
         if not 0 <= stage < self.stage_count:
-            raise InvalidStageError(
+            raise IndexError(
                 f"stage {stage} out of range (0 to {self.stage_count - 1})"
             )
-        try:
-            value = getattr(self._stage_list[stage], name)
-        except AttributeError:
-            raise KeyError(f"stage {stage} has no field {name!r}") from None
+        value = self._stage_list[stage]
+        for part in name.split("."):
+            try:
+                value = getattr(value, part)
+            except AttributeError:
+                raise KeyError(f"stage {stage} has no field {name!r}") from None
         if value is None:
             raise UnknownValueError(f"{name} is unknown for stage {stage}")
         return value
