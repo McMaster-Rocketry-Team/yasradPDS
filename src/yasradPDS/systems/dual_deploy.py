@@ -4,7 +4,7 @@
 # system data
  
 import math
-from system import System, Stage, register
+from .system import System, Stage, register
 from geometries.geometry import Geometry, new_geometry
 
 @register("dual_deploy")

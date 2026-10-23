@@ -1,4 +1,4 @@
-from geometry import Geometry, register
+from .geometry import Geometry, register
 
 @register("semi_hemisphere")
 class SemiHemisphere(Geometry):
