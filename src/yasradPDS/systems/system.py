@@ -14,14 +14,11 @@ class UnknownValueError(Exception):
 
 @dataclass(kw_only=True)
 class _Line:
-    # knowns, manufacturer supplied
-    count: int | None = None # lines in parallel
+    length: float | None = None
+    count: int # lines in parallel
     density: float # kg/m
     break_strength: float # N
     max_epsilon: float # elongation at break %/100
-
-    # unknowns
-    length: float | None = None
 
     def __post_init__(self):
         for f in fields(self):
@@ -83,6 +80,8 @@ class Stage:
         for name in ("cord_upper", "cord_lower", "shroud"):
             v = getattr(self, name)
             if isinstance(v, dict):
+                v = v.copy()
+                v.setdefault("count", self.gore_count if name == "shroud" else 1)
                 try:
                     setattr(self, name, _Line(**v))
                 except (ValueError, TypeError) as e:
@@ -92,13 +91,8 @@ class Stage:
             if getattr(self, name).length is None:
                 raise ValueError(f"{self.name}.{name}: length is required")
             
-        if self.shroud.count == None:
-            self.shroud.count = self.gore_count
-        elif self.shroud.count < 3:
+        if self.shroud.count < 3:
             raise ValueError(f"{self.name}: shroud.count must be >= 3")
-
-        self.cord_upper.count = 1
-        self.cord_lower.count = 1
         
     @property
     def total_mass(self) -> float:
