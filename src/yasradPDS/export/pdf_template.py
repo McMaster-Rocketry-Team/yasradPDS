@@ -75,7 +75,26 @@ def generate_template_pdf(gore_points : np.ndarray, allowance_points : np.ndarra
             shapes_seam[pg].draw_line(pdf.Point(localCurrCoord[0], localCurrCoord[1]), pdf.Point(localPrevCoord[0], localPrevCoord[1]))
         index += 1
 
-    for i in shapes_seam:
+    shapes_allowance : list[pdf.Shape] = []
+
+    for i in shapes_allowance:
+        i.finish(width = SEAM_LINEWEIGHT, color = pdf.pdfcolor["black"], closePath = False)
+        i.commit()
+
+    for i in range(_total_pages):
+            shapes_allowance.append(doc[i].new_shape())
+    
+    while index < gore_points.shape[0] - 1:
+        pageCoord[0] = int(correctedCoordToOrgin[index, 0] / (_page_printable_space_horizontal * 72))
+        pageCoord[1] = int(correctedCoordToOrgin[index, 1] / (_page_printable_space_vertical * 72))
+        if(pageCoord[0] < _pages_horizontal and pageCoord[1] < _pages_vertical):
+            pg = _page_num_based_on_coords(pageCoord[0], pageCoord[1], _pages_horizontal, _pages_vertical)
+            localCurrCoord = _coordinates_to_local_draw_space(pageCoord[0], pageCoord[1], correctedCoordToOrgin[index, :], _page_printable_space_horizontal, _page_printable_space_vertical, safe_margin)
+            localPrevCoord = _coordinates_to_local_draw_space(pageCoord[0], pageCoord[1], correctedCoordToOrgin[index + 1, :], _page_printable_space_horizontal, _page_printable_space_vertical, safe_margin)
+            shapes_allowance[pg].draw_line(pdf.Point(localCurrCoord[0], localCurrCoord[1]), pdf.Point(localPrevCoord[0], localPrevCoord[1]))
+        index += 1
+
+    for i in shapes_allowance:
         i.finish(width = SEAM_LINEWEIGHT, color = pdf.pdfcolor["black"], closePath = False)
         i.commit()
 
