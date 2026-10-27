@@ -13,21 +13,18 @@ class UnknownValueError(Exception):
     pass
 
 @dataclass(kw_only=True)
-class Line:
-    # knowns, manufacturer supplied
+class _Line:
+    length: float | None = None
+    count: int # lines in parallel
     density: float # kg/m
     break_strength: float # N
     max_epsilon: float # elongation at break %/100
-
-    # unknowns
-    length: float | None = None  
-    count: int = 1 # lines in parallel
 
     def __post_init__(self):
         for f in fields(self):
             v = getattr(self, f.name)
             if isinstance(v, (int, float)) and v <= 0:
-                raise ValueError(f"Line.{f.name} must be > 0, got {v}")
+                raise ValueError(f"_Line.{f.name} must be > 0, got {v}")
 
     @property
     def k(self) -> float:
@@ -37,7 +34,7 @@ class Line:
         return self.count * self.break_strength / self.max_epsilon / self.length
 
 @dataclass(kw_only=True)
-class Stage():
+class Stage:
     # knowns
     name: str
     geometry: str
@@ -47,9 +44,9 @@ class Stage():
     target_velocity: float # m/s
     mass_upper: float # kg
     mass_lower: float # kg
-    cord_upper: Line
-    cord_lower: Line
-    shroud: Line
+    cord_upper: _Line
+    cord_lower: _Line
+    shroud: _Line
     max_shock_upper: float # N
     max_shock_lower: float # N
     fabric_density: float # kg/m^2
@@ -69,28 +66,34 @@ class Stage():
             v = getattr(self, f.name)
             if isinstance(v, (int, float)) and v < 0:
                 raise ValueError(f"{self.name}: {f.name} must be >= 0, got {v}")
+            
         for name in self._NON_ZERO_PARAMS:
             if getattr(self, name) == 0:
                 raise ValueError(f"{self.name}: {name} must be > 0")
+
+        if self.gore_count < 3:
+            raise ValueError(f"{self.name}: gore_count must be >= 3")
+            
+        if not self.porosity <= 1:
+            raise ValueError(f"{self.name}: porosity must be in [0, 1]")
+
         for name in ("cord_upper", "cord_lower", "shroud"):
             v = getattr(self, name)
             if isinstance(v, dict):
+                v = v.copy()
+                v.setdefault("count", self.gore_count if name == "shroud" else 1)
                 try:
-                    setattr(self, name, Line(**v))
+                    setattr(self, name, _Line(**v))
                 except (ValueError, TypeError) as e:
                     raise type(e)(f"{self.name}.{name}: {e}") from None
+                
         for name in ("cord_upper", "cord_lower"):
             if getattr(self, name).length is None:
                 raise ValueError(f"{self.name}.{name}: length is required")
-        if self.gore_count < 3:
-            raise ValueError(f"{self.name}: gore_count must be >= 3")
-        if self.shroud.count == 1:
-            self.shroud.count = self.gore_count
-        elif self.shroud.count < 3:
+            
+        if self.shroud.count < 3:
             raise ValueError(f"{self.name}: shroud.count must be >= 3")
-        if not 0 <= self.porosity <= 1:
-            raise ValueError(f"{self.name}: porosity must be in [0, 1]")
-
+        
     @property
     def total_mass(self) -> float:
         return self.mass_upper + self.mass_lower
