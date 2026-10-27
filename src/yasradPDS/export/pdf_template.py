@@ -1,9 +1,12 @@
 # lays out the printable PDF gore pattern / template at true scale from the
 # system's canopy geometry
+
+
+
 import pymupdf as pdf
 import numpy as np
-import math 
-import geometries
+#import math 
+#import geometries
 
 UNITS_PER_INCH = 72
 
@@ -23,14 +26,17 @@ def generate_template_pdf(gore_points : np.ndarray, allowance_points : np.ndarra
     call .save("String") on this object - See pymupdf Document documentation
     """
 
-    _page_printable_space_horizontal : float = page_height -2 * safe_margin
+    _page_printable_space_horizontal : float = page_width -2 * safe_margin
     _page_printable_space_vertical : float = page_height - 2 * safe_margin
-    _pages_horizontal : int #Number of horizontal pages ---- compute from points/Parameter
-    _pages_vertical : int #Number of vertical pages ---- compute from points/Parameter
+
+
+
+    _pages_horizontal : int = 3 #Number of horizontal pages ---- compute from points/Parameter, tmp set to 3
+    _pages_vertical : int  = 3#Number of vertical pages ---- compute from points/Parameter
     _total_pages = _pages_horizontal * _pages_vertical
 
-    centerX = _page_printable_space_horizontal/2
-    centerY = _page_printable_space_vertical/2
+    centerX = _page_printable_space_horizontal *  _pages_horizontal * 72 / 2
+    centerY = _page_printable_space_vertical * _pages_vertical * 72 / 2
     
     #Generate blank pdf for document with pages bounded and numbered
     doc = pdf.open()
@@ -46,41 +52,32 @@ def generate_template_pdf(gore_points : np.ndarray, allowance_points : np.ndarra
         shape.finish(width = 0.5, color = pdf.pdfcolor["black"])
         shape.commit()
 
+
+    #Adds an offset to every point to center it
     correctedCoordToOrgin : np.ndarray = np.ndarray(gore_points.shape, dtype=float)
     for i in range(gore_points.shape[0]):
         correctedCoordToOrgin[i, :] = [gore_points[i, 0] + centerX, gore_points[i, 1] + centerY] 
     pageCoord : list = [0, 0]
     index = 0
+
+    shapes_seam : list[pdf.Shape] = []
+    
+    for i in range(_total_pages):
+        shapes_seam.append(doc[i].new_shape())
+
     while index < gore_points.shape[0] - 1:
         pageCoord[0] = int(correctedCoordToOrgin[index, 0] / (_page_printable_space_horizontal * 72))
         pageCoord[1] = int(correctedCoordToOrgin[index, 1] / (_page_printable_space_vertical * 72))
         if(pageCoord[0] < _pages_horizontal and pageCoord[1] < _pages_vertical):
-            pg = _page_num_based_on_coords(pageCoord[0], pageCoord[1])
-            localCurrCoord = _coordinates_to_local_draw_space(pageCoord[0], pageCoord[1], correctedCoordToOrgin[index, :])
-            localPrevCoord = _coordinates_to_local_draw_space(pageCoord[0], pageCoord[1], correctedCoordToOrgin[index + 1, :])
-            shape = doc[pg].new_shape()
-            shape.draw_line(pdf.Point(localCurrCoord[0], localCurrCoord[1]), pdf.Point(localPrevCoord[0], localPrevCoord[1]))
-            shape.finish(width = SEAM_LINEWEIGHT, color = pdf.pdfcolor["black"])
-            shape.commit()
+            pg = _page_num_based_on_coords(pageCoord[0], pageCoord[1], _pages_horizontal, _pages_vertical)
+            localCurrCoord = _coordinates_to_local_draw_space(pageCoord[0], pageCoord[1], correctedCoordToOrgin[index, :], _page_printable_space_horizontal, _page_printable_space_vertical, safe_margin)
+            localPrevCoord = _coordinates_to_local_draw_space(pageCoord[0], pageCoord[1], correctedCoordToOrgin[index + 1, :], _page_printable_space_horizontal, _page_printable_space_vertical, safe_margin)
+            shapes_seam[pg].draw_line(pdf.Point(localCurrCoord[0], localCurrCoord[1]), pdf.Point(localPrevCoord[0], localPrevCoord[1]))
         index += 1
 
-    correctedCoordToOrgin : np.ndarray = np.ndarray(allowance_points.shape, dtype=float)
-    for i in range(allowance_points.shape[0]):
-        correctedCoordToOrgin[i, :] = [allowance_points[i, 0] + centerX, allowance_points[i, 1] + centerY] 
-    pageCoord : list = [0, 0]
-    index = 0
-    while index < allowance_points.shape[0] - 1:
-        pageCoord[0] = int(correctedCoordToOrgin[index, 0] / (_page_printable_space_horizontal * 72))
-        pageCoord[1] = int(correctedCoordToOrgin[index, 1] / (_page_printable_space_vertical * 72))
-        if(pageCoord[0] < _pages_horizontal and pageCoord[1] < _pages_vertical):
-            pg = _page_num_based_on_coords(pageCoord[0], pageCoord[1])
-            localCurrCoord = _coordinates_to_local_draw_space(pageCoord[0], pageCoord[1], correctedCoordToOrgin[index, :])
-            localPrevCoord = _coordinates_to_local_draw_space(pageCoord[0], pageCoord[1], correctedCoordToOrgin[index + 1, :])
-            shape = doc[pg].new_shape()
-            shape.draw_line(pdf.Point(localCurrCoord[0], localCurrCoord[1]), pdf.Point(localPrevCoord[0], localPrevCoord[1]))
-            shape.finish(width = ALLOWANCE_LINEWEIGHT, color = pdf.pdfcolor["black"])
-            shape.commit()
-        index += 1
+    for i in shapes_seam:
+        i.finish(width = SEAM_LINEWEIGHT, color = pdf.pdfcolor["black"], closePath = False)
+        i.commit()
 
     return doc
 
@@ -89,16 +86,47 @@ def _page_num_based_on_coords(x : int, y : int, num_pages_horizontal : int, num_
     #Returns the page number (0 indexed) of the page that coordinates (x, y) refer to in pages
     num_pages_horizontal -> how many pages are in the template horizontally
     """
-    if (x > num_pages_horizontal or y > num_pages_vertical):
-        print("ERROR: X, Y VALUES OUT OF BOUNDS") 
-    pageNum : int 
-    pageNum = x + y*num_pages_horizontal
-    return pageNum
+    if not (0 <= x < num_pages_horizontal and
+            0 <= y < num_pages_vertical):
+        raise ValueError(f"Page coordinates out of bounds: ({x}, {y})")
+
+    return x + y * num_pages_horizontal
 
 def _coordinates_to_local_draw_space(page_x, page_y, coords, drawable_width_per_page, drawable_height_per_page, safe_margin):
     """"""
-    newCoord = [coords[0] - page_x * drawable_height_per_page + safe_margin*72, coords[1] - page_y * drawable_height_per_page + safe_margin * 72]
-    return newCoord
+    return [
+        coords[0] - page_x * drawable_width_per_page * 72
+        + safe_margin * 72,
+        coords[1] - page_y * drawable_height_per_page * 72
+        + safe_margin * 72
+    ]
 '''
 all code beyond this line is temporary and will need to be updated for yasradPDS
 '''
+def generate_circle_points(
+    radius: float = 200,
+    center_x: float = 0,
+    center_y: float = 0,
+    num_points: int = 1000
+) -> np.ndarray:
+    
+    theta = np.linspace(0, 2 * np.pi, num_points, endpoint=True)
+
+    x = center_x + radius * np.cos(theta)
+    y = center_y + radius * np.sin(theta)
+
+    return np.column_stack((x, y))
+
+
+# Generate test geometry
+points = generate_circle_points(
+    radius=500,
+    center_x=0,
+    center_y=0,
+    num_points=1000
+)
+
+# Test your PDF generator
+doc = generate_template_pdf(points, points)
+doc.save("Circle Test.pdf")
+doc.close()
