@@ -1,0 +1,11 @@
+How to run virtual environment to test cli
+python -m venv .venv <- Creates the virtual environment
+.venv\Scripts\Activate.ps1 <- Activates virtual environment, (.venv) in terminal
+pip install -e . <- Install dependencies
+
+If all is completed without errors:
+yasradPDS <-tag>
+
+Tags can be:
+    --version
+    --help

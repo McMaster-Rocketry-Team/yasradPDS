@@ -4,3 +4,6 @@
 # in dual_deploy.py, only the unmade parachute is varaible
 # if both are existing, dual_deploy.py runs no solver for
 # unknowns, instead it just stores the data to run analyses/exports
+
+# use tkinter
+import tkinter as tk

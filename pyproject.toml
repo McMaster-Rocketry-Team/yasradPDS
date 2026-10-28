@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "yasradPDS"
+version = "0.1.0"
+description = "SRAD parachute design system"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "matplotlib",
+    "rocketpy"
+    "click>=8",
+    "tkinter",
+]
+
+[project.scripts]
+yasradPDS = "yasradPDS.interface.cli:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+yasradPDS = ["config/defaults.json"]

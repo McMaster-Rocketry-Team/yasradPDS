@@ -1,0 +1,117 @@
+# RocketPy classes usage information
+
+https://docs.rocketpy.org/en/latest/user/rocket/rocket_usage.html
+In order to create a Flight class, it needs a Rocket, Environment class, rail length (m):
+Rocket:
+- radius (m)
+- mass (without motor, kg)
+- inertia (tuple [I_11, I_22, I_33], kg * m^2) <-- I11 and I22 are inertias of the mass around the perpendicular axes to the rocket, I33 is the inertia around the rocket center axis.
+- power_off_drag and power_on_drag (drag constant with motor on or off) <-- .csv file of drag curves in the format (mach number, drag coefficient), can use CFD for this
+- center_of_mass_without_motor (m)
+
+Can add other things like hybrid motor class and aerodynamics
+Check with rocket_object_name.draw() to see if rocket looks similar
+
+.add_parachute() examples:
+main = rocket_object_name.add_parachute(
+    name="Main",
+    cd_s=10.0,
+    trigger=800,
+    sampling_rate=105,
+    lag=1.5,
+    noise=(0, 8.3, 0.5),
+    radius=1.5,
+    height=1.5,
+    porosity=0.0432,
+)
+
+drogue = rocket_object_name.add_parachute(
+    name="Drogue",
+    cd_s=1.0,
+    trigger="apogee",
+    sampling_rate=105,
+    lag=1.5,
+    noise=(0, 8.3, 0.5),
+    radius=1.5,
+    height=1.5,
+    porosity=0.0432,
+)
+
+Can optionally define lag and noise if needed.
+
+If you want specific triggers based on pressure (p), height (h) AGL or state vectors (y) like velocity, altitude angle:
+def main_trigger(p, h, y):
+    return True for the case that parachute is deployed, other wise false
+def drogue_trigger(p, h, y):
+    pass
+    
+Recommended but optional: Setting rail guides.
+
+======================================================================================================
+
+https://docs.rocketpy.org/en/latest/user/environment/index.html
+Environment: 
+- date (year, month, day, hour) <-- use datetime library
+- latitude = float
+- longitude = float
+- elevation = float
+
+.set_location(latitude: float, longitude: float)
+.set_elevation("Open-Elevation") <-- uses RocketPy built-in API to get elevation
+
+To set a custom atmosphere:
+env_custom_atm = Environment()
+env_custom_atm.set_atmospheric_model(
+    type="custom_atmosphere",
+    pressure=None,
+    temperature=300,
+    wind_u=[
+        (0, 5), # 5 m/s at 0 m
+        (1000, 10) # 10 m/s at 1000 m
+    ],
+    wind_v=[
+        (0, -2), # -2 m/s at 0 m
+        (500, 3), # 3 m/s at 500 m
+        (1600, 2), # 2 m/s at 1000 m
+    ],
+)
+
+env_custom_atm.plots.atmospheric_model() <-- plot graphs of atmospheric model
+Can also import from .csv: https://docs.rocketpy.org/en/latest/user/environment/3-further/data_csv.html#loading-environment-data-from-csv
+
+Forecasts is also possible (future weather): https://docs.rocketpy.org/en/latest/user/environment/1-atm-models/forecast.html
+
+======================================================================================================
+
+https://docs.rocketpy.org/en/latest/user/flight.html
+Flight:
+- rocket: Rocket
+- environment: Environment
+- rail_length: float
+- inclination (optional): float
+- heading (optional): float
+
+Can also customize initial state:
+initial_solution = [
+    t_initial,    # Initial time (s)
+    x_init,       # Initial X position - East coordinate (m)
+    y_init,       # Initial Y position - North coordinate (m)
+    z_init,       # Initial Z position - altitude above launch site (m)
+    vx_init,      # Initial velocity in X direction - East (m/s)
+    vy_init,      # Initial velocity in Y direction - North (m/s)
+    vz_init,      # Initial velocity in Z direction - upward (m/s)
+    e0_init,      # Initial Euler parameter 0 (quaternion scalar part)
+    e1_init,      # Initial Euler parameter 1 (quaternion i component)
+    e2_init,      # Initial Euler parameter 2 (quaternion j component)
+    e3_init,      # Initial Euler parameter 3 (quaternion k component)
+    w1_init,      # Initial angular velocity about rocket's x-axis (rad/s)
+    w2_init,      # Initial angular velocity about rocket's y-axis (rad/s)
+    w3_init       # Initial angular velocity about rocket's z-axis (rad/s)
+]
+
+Access to simulation results: https://docs.rocketpy.org/en/latest/user/flight.html#accessing-simulation-results
+
+======================================================================================================
+
+Monte Carlo class: https://docs.rocketpy.org/en/latest/notebooks/monte_carlo_analysis/monte_carlo_class_usage.html
+Monte Carlo analysis: https://docs.rocketpy.org/en/latest/notebooks/monte_carlo_analysis/monte_carlo_analysis.html
