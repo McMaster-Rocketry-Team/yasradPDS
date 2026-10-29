@@ -10,9 +10,8 @@ requires-python = ">=3.10"
 dependencies = [
     "numpy",
     "matplotlib",
-    "rocketpy"
+    "rocketpy",
     "click>=8",
-    "tkinter",
 ]
 
 [project.scripts]
