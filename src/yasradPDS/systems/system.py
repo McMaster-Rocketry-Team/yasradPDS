@@ -4,6 +4,7 @@
 # passing just a single system object
 
 from math import isclose
+from numpy import ndarray
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields
 from typing import Any, ClassVar
@@ -57,6 +58,7 @@ class Stage:
     spill_hole_diameter: float | None = None # m
     area: float | None = None # m^2
     fill_time: float | None = None # s
+    gore_outline: ndarray | None = None # array of function points for pdf/dxf exports
     
     _NON_ZERO_PARAMS = ("target_velocity", "mass_upper", "mass_lower",
                     "max_shock_upper", "max_shock_lower", "fabric_density")
