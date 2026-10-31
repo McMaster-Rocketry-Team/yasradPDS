@@ -5,7 +5,7 @@
  
 import math
 from .system import System, Stage, register
-from geometries.geometry import Geometry, new_geometry
+from yasradPDS.geometries.geometry import Geometry, new_geometry
 
 @register("dual_deploy")
 class DualDeploySystem(System):
