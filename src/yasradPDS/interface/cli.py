@@ -8,8 +8,6 @@ It's a lot easier to read compared to argparse and can easily add more cli comma
 
 climage for yasradPDS iamge
 """
-from yasradPDS.interface import dual_deploy_gui
-
 import click 
 #import climage
 
@@ -20,20 +18,13 @@ def cli():
     pass
 
 @cli.command()
-@click.option("--apogee", type = float, help = "Target apogee (m)")
-@click.option("--main-alt", type = float, help = "Main deployment altitude (m)")
-@click.option("--descent-rate", type = float, help = "Target descent rate (m/s)")
-# @click.option("--open", is_flag=True, help="Open config GUI")
-def config(apogee, main_alt, descent_rate):
-    if apogee is None and main_alt is None and descent_rate is None:
-        from yasradPDS.interface.dual_deploy_gui import prompt_inputs
-        inputs = prompt_inputs()
-        if inputs is None:
-            click.echo("No changes made.")
-            return
-        click.echo(f"Got: {inputs}")
-    else:
-        click.echo(f"apogee={apogee}, main_alt={apogee}, descent_rate={descent_rate}")
+def config():
+    from yasradPDS.interface.dual_deploy_gui import prompt_inputs
+    inputs = prompt_inputs()
+    if inputs is None:
+        click.echo("No changes made.")
+        return
+    click.echo(f"Got: {inputs}")
     # TODO: update and save design inputs into system object
 
 @cli.command()
