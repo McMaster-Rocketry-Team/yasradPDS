@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-yasradPDS = "yasradPDS.interface.cli:cli"
+yasradPDS = "yasradPDS.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
