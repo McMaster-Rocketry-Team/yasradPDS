@@ -1,1 +1,1 @@
-from . import semi_hemisphere
+from . import semi_elipsoid

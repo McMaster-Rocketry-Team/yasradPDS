@@ -40,8 +40,8 @@ class Geometry(ABC):
 
 
     @abstractmethod
-    def getDXFpoints(self, n: int, chute_diameter: float, chute_height: float, vent_diameter: float) -> list[tuple[float, float]]:
-        """Return a list of (x, y) points for the geometry's outline. n is number of gores the chute is sliced into. Dimensions in m."""
+    def getDXFpoints(self, n: int, chute_diameter: float, chute_height: float, vent_diameter: float) -> np.ndarray:
+        """Return an (N, 2) numpy array of (x, y) points for the geometry's outline. n is number of gores the chute is sliced into. Dimensions in m."""
         pass
 
 

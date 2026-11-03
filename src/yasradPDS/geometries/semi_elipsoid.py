@@ -30,8 +30,9 @@ class SemiElipsoid(Geometry):
         # Ensure Cd doesn't drop below logical limits for extreme vent sizes
         return max(cd, 0.1)
 
-    def getDXFpoints(self, n: int, chute_diameter: float, chute_height: float, vent_diameter: float) -> list[tuple[float, float]]:
-        """Return a closed loop of (x, y) points (in meters) outlining one gore.
+    def getDXFpoints(self, n: int, chute_diameter: float, chute_height: float, vent_diameter: float) -> np.ndarray:
+        """Return a closed loop of (x, y) points (in meters) outlining one gore,
+        as an (N, 2) numpy array with one (x, y) point per row.
 
         Arc-length model: the gore's half-width at canopy radius r is the arc
         length r * pi / n, rather than the chord r * sin(pi / n).
@@ -136,10 +137,9 @@ class SemiElipsoid(Geometry):
 
         # build the closed outline: walk up the left edge from bottom to vent, then
         # come back down the right edge (reverse order, so the loop is continuous
-        # across the vent), then repeat the first point to close the polygon. float()
-        # converts numpy scalars into plain python floats for the DXF writer.
-        points = [(float(x_left[i]), float(y[i])) for i in range(num_pts)]                # up the left edge
-        points += [(float(x_right[i]), float(y[i])) for i in range(num_pts - 1, -1, -1)]  # down the right edge
-        points.append((0.0, 0.0))                                                          # close the loop
-        return points
+        # across the vent), then repeat the first point to close the polygon.
+        # the result is an (N, 2) float array of (x, y) rows, in meters.
+        left = np.column_stack((x_left, y))                    # up the left edge
+        right = np.column_stack((x_right, y))[::-1]            # down the right edge
+        return np.vstack((left, right, [[0.0, 0.0]]))          # close the loop
 
