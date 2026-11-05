@@ -8,6 +8,7 @@ from numpy import ndarray
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields
 from typing import Any, ClassVar
+from yasradPDS.geometries.geometry import Geometry, new_geometry
 
 
 class UnknownValueError(Exception):
@@ -36,8 +37,13 @@ class _Line:
 
 @dataclass(kw_only=True)
 class Stage:
+    _geometry: Geometry # geometry solver object
+    CD: float
+    FOS: float = 2 # replace with FOS from defaults
+
     # knowns
     name: str
+    is_existing: bool = False
     geometry: str
     gore_count: int
     deploy_altitude: float # m
@@ -95,6 +101,15 @@ class Stage:
             
         if self.shroud.count < 3:
             raise ValueError(f"{self.name}: shroud.count must be >= 3")
+
+        if self.is_existing:
+            if self.main_diameter <= 0:
+                raise ValueError(f"{self.name}: main diameter must be > 0")
+            if self.spill_hole_diameter < 0:
+                raise ValueError(f"{self.name}: spill hole diameter must be >= 0")
+
+        self._geometry = new_geometry(self.geometry)
+        self.CD = self._geometry.getCD()
         
     @property
     def total_mass(self) -> float:
