@@ -21,7 +21,7 @@ def pdf_export(sys : System, stage : int, name : str): #Remove points post testi
     points : np.ndarray = sys.get(stage, "gore_outline")*39.3700787 #Meter to inches conversion
     allowance_points = offset_points(points, consts.ALLOWANCE)
     pdf = _generate_template_pdf(points, allowance_points, consts.PAGE_SAFE_MARGIN, consts.PAGE_WIDTH, consts.PAGE_HEIGHT)
-    pdf.save(name)
+    pdf.save(name + ".pdf")
     pdf.close()
 
 
@@ -150,9 +150,7 @@ def _page_num_based_on_coords(x : int, y : int, num_pages_horizontal : int, num_
     return x + y * num_pages_horizontal
 
 def _coordinates_to_local_draw_space(page_x : int, page_y : int, coords : np.array, drawable_width_per_page : float, drawable_height_per_page : float, safe_margin : float):
-    """Converts a set of coordinates to the local draw area, if the point goes out of bounds, adds multiples of truncate_vector until it returns in bounds
-    
-    Needs checking to see if a solve is even possible using truncate vector, otherwise the point gets moved to the corner
+    """Converts a set of coordinates to the local draw area.
     """
     x : np.ndarray
     y : np.ndarray
@@ -163,6 +161,9 @@ def _coordinates_to_local_draw_space(page_x : int, page_y : int, coords : np.arr
     return([x, y])
 
 def _insert_points_crossing_boundary(points: np.ndarray, bounds_width: float, bounds_height: float, number_vertical: int, number_horizontal: int) -> np.ndarray:
+    """Returns an array such that If a point is to cross a boundary between pages, add a point at the boundary"""
+    
+    
     numpts = len(points)
     newpts = []
 
