@@ -8,6 +8,17 @@ It's a lot easier to read compared to argparse and can easily add more cli comma
 
 climage for yasradPDS iamge
 """
+
+"""
+TODO:
+- Fill the dropdown from _MODELS. Using sorted(atm._MODELS) for the choices keeps the GUI in step if you add a model later. If you'd rather not reach into a private name from the GUI, drop the leading underscore and call it MODELS.
+- Convert GUI text before calling build(). Text fields give you strings, so convert them first:
+  - for forecast/ensemble, turn the date into a datetime
+  - for custom, turn the wind into a float, or into a list of (height ASL, m/s) pairs for a profile
+- Show only the fields for the chosen model. standard needs only the site. custom needs the two wind values. forecast/ensemble need a date, and the source is optional. Anything extra gets passed to the model's function, which will raise a TypeError.
+- Heights in a wind profile are above sea level, not above the launch pad. Either label the field clearly or let users enter heights above ground and run them through atm.asl() before calling build().
+"""
+
 import click 
 #import climage
 
