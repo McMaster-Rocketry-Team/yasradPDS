@@ -94,8 +94,8 @@ def _generate_template_pdf(gore_points : np.ndarray, allowance_points : np.ndarr
 
     while index < correctedCoordToOrgin.shape[0]:
         
-        pageCoord[0] = math.floor(abs((correctedCoordToOrgin[index, 0] + correctedCoordToOrgin[(index + 1)%len, 0])/2) / (_page_printable_space_horizontal * 72))
-        pageCoord[1] = math.floor(abs((correctedCoordToOrgin[index, 1] + correctedCoordToOrgin[(index + 1)%len, 1])/2) / (_page_printable_space_vertical * 72))
+        pageCoord[0] = math.floor(abs((correctedCoordToOrgin[index][0] + correctedCoordToOrgin[(index + 1)%len][0])/2) / (_page_printable_space_horizontal * 72))
+        pageCoord[1] = math.floor(abs((correctedCoordToOrgin[index][1] + correctedCoordToOrgin[(index + 1)%len][1])/2) / (_page_printable_space_vertical * 72))
         if(pageCoord[0] < _pages_horizontal and pageCoord[1] < _pages_vertical):
             pg = _page_num_based_on_coords(pageCoord[0], pageCoord[1], _pages_horizontal, _pages_vertical)
             localCurrCoord = _coordinates_to_local_draw_space(pageCoord[0], pageCoord[1], correctedCoordToOrgin[index, :], _page_printable_space_horizontal * 72, _page_printable_space_vertical * 72, safe_margin * 72)
@@ -124,8 +124,8 @@ def _generate_template_pdf(gore_points : np.ndarray, allowance_points : np.ndarr
     
     
     while index < correctedCoordToOrgin.shape[0]:
-            pageCoord[0] = math.floor(abs((correctedCoordToOrgin[index, 0] + correctedCoordToOrgin[(index + 1)%len, 0])/2) / (_page_printable_space_horizontal * 72))
-            pageCoord[1] = math.floor(abs((correctedCoordToOrgin[index, 1] + correctedCoordToOrgin[(index + 1)%len, 1])/2) / (_page_printable_space_vertical * 72))
+            pageCoord[0] = math.floor(abs((correctedCoordToOrgin[index][0] + correctedCoordToOrgin[(index + 1)%len][0])/2) / (_page_printable_space_horizontal * 72))
+            pageCoord[1] = math.floor(abs((correctedCoordToOrgin[index][1] + correctedCoordToOrgin[(index + 1)%len][1])/2) / (_page_printable_space_vertical * 72))
             if(pageCoord[0] < _pages_horizontal and pageCoord[1] < _pages_vertical):
                 pg = _page_num_based_on_coords(pageCoord[0], pageCoord[1], _pages_horizontal, _pages_vertical)
                 localCurrCoord = _coordinates_to_local_draw_space(pageCoord[0], pageCoord[1], correctedCoordToOrgin[index, :], _page_printable_space_horizontal *72, _page_printable_space_vertical *72, safe_margin *72)
@@ -199,7 +199,11 @@ def _insert_points_crossing_boundary(points: np.ndarray, bounds_width: float, bo
 def offset_points(points: np.ndarray, dist: float) -> np.ndarray:
     n = len(points)
     newpts = []
-
+    signed_area = 0
+    for i in range(len(points)):
+        p1 = points[i]
+        p2 = points[(i + 1) % len(points)]
+        signed_area += (p2[0] - p1[0]) * (p2[1] + p1[1])
     for i in range(n):
         prev = points[(i - 1) % n]
         curr = points[i]
@@ -210,10 +214,12 @@ def offset_points(points: np.ndarray, dist: float) -> np.ndarray:
 
         d1 = d1 / np.linalg.norm(d1)
         d2 = d2 / np.linalg.norm(d2)
-
-        n1 = np.array([d1[1], -d1[0]])
-        n2 = np.array([d2[1], -d2[0]])
-
+        if signed_area < 0:
+            n1 = np.array([d1[1], -d1[0]])
+            n2 = np.array([d2[1], -d2[0]])
+        else:
+            n1 = np.array([-d1[1], d1[0]])
+            n2 = np.array([-d2[1], d2[0]])
         miter = n1 + n2
         miter = miter / np.linalg.norm(miter)
 
@@ -229,7 +235,7 @@ all code beyond this line is for temp testing
 '''
 
 a = 6
-points = np.array([[-a, a], [-a, -a], [a, -a], [a, a]])
+points = np.array([[a, -a], [a, a], [-a, -a]])
 offset_pts = offset_points(points, 1)
 doc = _generate_template_pdf(points, offset_pts)
 doc.save("Square Test.pdf")
