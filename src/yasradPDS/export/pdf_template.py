@@ -1,36 +1,30 @@
 # lays out the printable PDF gore pattern / template at true scale from the
 # system's canopy geometry
+"""
+from ..systems.system import System
+from ..utils.constants import PdfConstants as consts
+"""
 
-#from ..systems.system import System
-#from yasradPDS.utils.constants import PdfConstants as consts
-
+import math
 import pymupdf as pdf
 import numpy as np
-#import math 
-#import geometries
 
-UNITS_PER_INCH = 72
-
-#Printing Variables, determines the properties of the export
-SEAM_LINEWEIGHT : float = 2
+#Constants that won't need to be changed
+SEAM_LINEWEIGHT : float = 2 #Lineweights are in pdf pixels
 ALLOWANCE_LINEWEIGHT : float = 1
 BOUNDING_BOX_LINEWEIGHT : float = 0.5
 
 
 #Use system to generate export
 """
-def system_pdf_export(sys : System, stage : int, pts): #Remove points post testing
+def pdf_export(sys : System, stage : int, name : str): #Remove points post testing
     points : np.ndarray = sys.get(stage, "gore_outline")
-    allowance_points = offset_points(pts, 1)
-    _generate_template_pdf(points, allowance_points, consts.PAGE_SAFE_MARGIN, consts.PAGE_WIDTH, consts.PAGE_HEIGHT)
-
-    
-    pass
-
+    allowance_points = offset_points(sys.get(stage, "gore_outline"), 1)
+    pdf = _generate_template_pdf(points, allowance_points, consts.PAGE_SAFE_MARGIN, consts.PAGE_WIDTH, consts.PAGE_HEIGHT)
+    pdf.save(name)
+    pdf.close()
 """
 
-def page_boundary_clip() -> np.ndarray:
-    pass
 
 def _generate_template_pdf(gore_points : np.ndarray, allowance_points : np.ndarray, safe_margin : float = 0.5, page_width : float = 8.5, page_height : float = 11)-> pdf.Document:
     """
@@ -44,20 +38,30 @@ def _generate_template_pdf(gore_points : np.ndarray, allowance_points : np.ndarr
     Inputs are in inches, internally gets converted to pdf units
     """
 
+
+
     gore_points_pdf = gore_points * 72
     allowance_points_pdf = allowance_points * 72
+
+   
+
 
     _page_printable_space_horizontal : float = page_width -2 * safe_margin
     _page_printable_space_vertical : float = page_height - 2 * safe_margin
 
+    vert_space : float = abs(np.max(gore_points[:, 1]) - np.min(gore_points[:, 1]) + 4.00)
+    horiz_space : float = abs(np.max(gore_points[:, 0]) - np.min(gore_points[:, 0]) + 4.00)
 
+    
 
-    _pages_horizontal : int = 3 #Number of horizontal pages ---- compute from points/Parameter, tmp set to 3
-    _pages_vertical : int  = 3#Number of vertical pages ---- compute from points/Parameter
+    _pages_horizontal : int = math.ceil(horiz_space / (page_width - 2* safe_margin)) #Number of horizontal pages ---- compute from points/Parameter, tmp set to 3
+    _pages_vertical : int  = math.ceil(vert_space / (page_height - 2* safe_margin)) #Number of vertical pages ---- compute from points/Parameter
     _total_pages = _pages_horizontal * _pages_vertical
 
+    
+    
     centerX = (_page_printable_space_horizontal * _pages_horizontal * 72) / 2
-    centerY = (_page_printable_space_vertical * _pages_vertical * 72 / 2)
+    centerY = (_page_printable_space_vertical * _pages_vertical * 72)/2
     
     #Generate blank pdf for document with pages bounded and numbered
     doc = pdf.open()
@@ -70,7 +74,7 @@ def _generate_template_pdf(gore_points : np.ndarray, allowance_points : np.ndarr
         shape = doc[i].new_shape()
         r = pdf.Rect(safe_margin * 72, safe_margin *72, (page_width - safe_margin) * 72, (page_height - safe_margin) * 72)
         shape.draw_rect(r)
-        shape.finish(width = 0.5, color = pdf.pdfcolor["black"])
+        shape.finish(width = BOUNDING_BOX_LINEWEIGHT, color = pdf.pdfcolor["black"])
         shape.commit()
 
 
@@ -78,8 +82,8 @@ def _generate_template_pdf(gore_points : np.ndarray, allowance_points : np.ndarr
     correctedCoordToOrgin : np.ndarray = np.ndarray(gore_points_pdf.shape, dtype=float)
     for i in range(gore_points_pdf.shape[0]):
         correctedCoordToOrgin[i, :] = [gore_points_pdf[i, 0] + centerX, gore_points_pdf[i, 1] + centerY] 
+    correctedCoordToOrgin = _insert_points_crossing_boundary(correctedCoordToOrgin, _page_printable_space_horizontal * 72, _page_printable_space_vertical * 72, _pages_vertical, _pages_horizontal)
     pageCoord : list = [0, 0]
-
     index = 0
     shapes_seam : list[pdf.Shape] = []
     
@@ -88,18 +92,19 @@ def _generate_template_pdf(gore_points : np.ndarray, allowance_points : np.ndarr
     
     len = correctedCoordToOrgin.shape[0]
 
-    while index < gore_points_pdf.shape[0]:
-        pageCoord[0] = int(correctedCoordToOrgin[index, 0] / (_page_printable_space_horizontal * 72))
-        pageCoord[1] = int(correctedCoordToOrgin[index, 1] / (_page_printable_space_vertical * 72))
+    while index < correctedCoordToOrgin.shape[0]:
+        
+        pageCoord[0] = math.floor(abs((correctedCoordToOrgin[index][0] + correctedCoordToOrgin[(index + 1)%len][0])/2) / (_page_printable_space_horizontal * 72))
+        pageCoord[1] = math.floor(abs((correctedCoordToOrgin[index][1] + correctedCoordToOrgin[(index + 1)%len][1])/2) / (_page_printable_space_vertical * 72))
         if(pageCoord[0] < _pages_horizontal and pageCoord[1] < _pages_vertical):
             pg = _page_num_based_on_coords(pageCoord[0], pageCoord[1], _pages_horizontal, _pages_vertical)
-            localCurrCoord = _coordinates_to_local_draw_space(pageCoord[0], pageCoord[1], correctedCoordToOrgin[index, :], _page_printable_space_horizontal, _page_printable_space_vertical, safe_margin)
-            localPrevCoord = _coordinates_to_local_draw_space(pageCoord[0], pageCoord[1], correctedCoordToOrgin[(index + 1)%len, :], _page_printable_space_horizontal, _page_printable_space_vertical, safe_margin)
-            shapes_seam[pg].draw_line(pdf.Point(localCurrCoord[0], localCurrCoord[1]), pdf.Point(localPrevCoord[0], localPrevCoord[1]))
+            localCurrCoord = _coordinates_to_local_draw_space(pageCoord[0], pageCoord[1], correctedCoordToOrgin[index, :], _page_printable_space_horizontal * 72, _page_printable_space_vertical * 72, safe_margin * 72)
+            localNextCoord = _coordinates_to_local_draw_space(pageCoord[0], pageCoord[1], correctedCoordToOrgin[(index + 1)%len, :], _page_printable_space_horizontal * 72, _page_printable_space_vertical * 72, safe_margin * 72)
+            shapes_seam[pg].draw_line(pdf.Point(localCurrCoord[0], localCurrCoord[1]), pdf.Point(localNextCoord[0], localNextCoord[1]))
         index += 1
 
     for i in shapes_seam:
-        i.finish(closePath= False)
+        i.finish(width=SEAM_LINEWEIGHT,closePath= False)
         i.commit()
 
 
@@ -114,21 +119,21 @@ def _generate_template_pdf(gore_points : np.ndarray, allowance_points : np.ndarr
     for i in range(allowance_points_pdf.shape[0]):
         correctedCoordToOrgin[i, :] = [allowance_points_pdf[i, 0] + centerX, allowance_points_pdf[i, 1] + centerY] 
     pageCoord : list = [0, 0]
+    correctedCoordToOrgin = _insert_points_crossing_boundary(correctedCoordToOrgin, _page_printable_space_horizontal * 72, _page_printable_space_vertical * 72, _pages_vertical, _pages_horizontal)
     len = correctedCoordToOrgin.shape[0]
     
-
-    while index < allowance_points_pdf.shape[0]:
-            
-            pageCoord[0] = int(correctedCoordToOrgin[index, 0] / (_page_printable_space_horizontal * 72))
-            pageCoord[1] = int(correctedCoordToOrgin[index, 1] / (_page_printable_space_vertical * 72))
+    
+    while index < correctedCoordToOrgin.shape[0]:
+            pageCoord[0] = math.floor(abs((correctedCoordToOrgin[index][0] + correctedCoordToOrgin[(index + 1)%len][0])/2) / (_page_printable_space_horizontal * 72))
+            pageCoord[1] = math.floor(abs((correctedCoordToOrgin[index][1] + correctedCoordToOrgin[(index + 1)%len][1])/2) / (_page_printable_space_vertical * 72))
             if(pageCoord[0] < _pages_horizontal and pageCoord[1] < _pages_vertical):
                 pg = _page_num_based_on_coords(pageCoord[0], pageCoord[1], _pages_horizontal, _pages_vertical)
-                localCurrCoord = _coordinates_to_local_draw_space(pageCoord[0], pageCoord[1], correctedCoordToOrgin[index, :], _page_printable_space_horizontal, _page_printable_space_vertical, safe_margin)
-                localPrevCoord = _coordinates_to_local_draw_space(pageCoord[0], pageCoord[1], correctedCoordToOrgin[(index + 1) % len, :], _page_printable_space_horizontal, _page_printable_space_vertical, safe_margin)
-                shapes_allowance[pg].draw_line(pdf.Point(localCurrCoord[0], localCurrCoord[1]), pdf.Point(localPrevCoord[0], localPrevCoord[1]))
+                localCurrCoord = _coordinates_to_local_draw_space(pageCoord[0], pageCoord[1], correctedCoordToOrgin[index, :], _page_printable_space_horizontal *72, _page_printable_space_vertical *72, safe_margin *72)
+                localNextCoord = _coordinates_to_local_draw_space(pageCoord[0], pageCoord[1], correctedCoordToOrgin[(index + 1) % len, :], _page_printable_space_horizontal * 72, _page_printable_space_vertical*72, safe_margin*72)
+                shapes_allowance[pg].draw_line(pdf.Point(localCurrCoord[0], localCurrCoord[1]), pdf.Point(localNextCoord[0], localNextCoord[1]))
             index += 1
     for i in shapes_allowance:
-            i.finish(width= 0.5, closePath= False)
+            i.finish(width= ALLOWANCE_LINEWEIGHT, closePath= False)
             i.commit()
     
     return doc
@@ -140,19 +145,65 @@ def _page_num_based_on_coords(x : int, y : int, num_pages_horizontal : int, num_
     """
     return x + y * num_pages_horizontal
 
-def _coordinates_to_local_draw_space(page_x, page_y, coords, drawable_width_per_page, drawable_height_per_page, safe_margin):
-    """"""
-    return [
-        coords[0] - page_x * drawable_width_per_page * 72
-        + safe_margin * 72,
-        coords[1] - page_y * drawable_height_per_page * 72
-        + safe_margin * 72
-    ]
+def _coordinates_to_local_draw_space(page_x : int, page_y : int, coords : np.array, drawable_width_per_page : float, drawable_height_per_page : float, safe_margin : float):
+    """Converts a set of coordinates to the local draw area, if the point goes out of bounds, adds multiples of truncate_vector until it returns in bounds
+    
+    Needs checking to see if a solve is even possible using truncate vector, otherwise the point gets moved to the corner
+    """
+    x : np.ndarray
+    y : np.ndarray
+    x = coords[0] - page_x * drawable_width_per_page + safe_margin
+    y = coords[1] - page_y * drawable_height_per_page + safe_margin
+        
+
+    return([x, y])
+
+def _insert_points_crossing_boundary(points: np.ndarray, bounds_width: float, bounds_height: float, number_vertical: int, number_horizontal: int) -> np.ndarray:
+    numpts = len(points)
+    newpts = []
+
+    xbounds = [i * bounds_width for i in range(1, number_horizontal)]
+
+    ybounds = [i * bounds_height for i in range(1, number_vertical)]
+
+    for j in range(numpts):
+        x1, y1 = points[j]
+        x2, y2 = points[(j + 1) % numpts]
+        dx = x2 - x1
+        dy = y2 - y1
+        intersections = []
+        if abs(dx) > 1e-12:
+            for xb in xbounds:
+                ratio = (xb - x1) / dx
+                if 0 < ratio < 1:
+                    y = y1 + ratio * dy
+                    intersections.append((ratio, [xb, y]))
+
+        if abs(dy) > 1e-12:
+            for yb in ybounds:
+                ratio = (yb - y1) / dy
+                if 0 < ratio < 1:
+                    x = x1 + ratio * dx
+                    intersections.append((ratio, [x, yb]))
+
+        # Sort intersections along the edge
+        intersections.sort(key=lambda item: item[0])
+
+        newpts.append(points[j])
+
+        for _, intersection in intersections:
+            newpts.append(intersection)
+
+    return np.array(newpts, dtype=float)
 
 def offset_points(points: np.ndarray, dist: float) -> np.ndarray:
     n = len(points)
     newpts = []
-
+    signed_area = 0
+    for i in range(len(points)):
+        p1 = points[i]
+        p2 = points[(i + 1) % len(points)]
+        signed_area += (p2[0] - p1[0]) * (p2[1] + p1[1])
     for i in range(n):
         prev = points[(i - 1) % n]
         curr = points[i]
@@ -163,58 +214,29 @@ def offset_points(points: np.ndarray, dist: float) -> np.ndarray:
 
         d1 = d1 / np.linalg.norm(d1)
         d2 = d2 / np.linalg.norm(d2)
-
-        n1 = np.array([d1[1], -d1[0]])
-        n2 = np.array([d2[1], -d2[0]])
-
+        if signed_area < 0:
+            n1 = np.array([d1[1], -d1[0]])
+            n2 = np.array([d2[1], -d2[0]])
+        else:
+            n1 = np.array([-d1[1], d1[0]])
+            n2 = np.array([-d2[1], d2[0]])
         miter = n1 + n2
         miter = miter / np.linalg.norm(miter)
 
         denom = np.dot(miter, n1)
 
-        if abs(denom) < 0:
-            newpts.append(curr + n1 * dist)
-        else:
-            length = dist / denom
-            newpts.append(curr + miter * length)
+
+        length = dist / denom
+        newpts.append(curr + miter * length)
 
     return np.array(newpts)
 '''
-all code beyond this line is temporary and will need to be updated for yasradPDS CDR, Temporary Testing
+all code beyond this line is for temp testing
 '''
-def generate_square_points(
-    radius: float = 10,
-    center_x: float = 0,
-    center_y: float = 0,
-    num_points: int = 1000
-) -> np.ndarray:
 
-    half_side = radius
-
-    corners = np.array([
-        [center_x - half_side, center_y - half_side],
-        [center_x + half_side, center_y - half_side],
-        [center_x + half_side, center_y + half_side],
-        [center_x - half_side, center_y + half_side],
-        [center_x - half_side, center_y - half_side]
-    ])
-
-    points_per_side = num_points // 4
-
-    sides = [
-        np.linspace(corners[i], corners[i + 1], points_per_side, endpoint=False)
-        for i in range(4)
-    ]
-
-    return np.vstack(sides)
-
-points = generate_square_points(
-    radius=4.5,
-    center_x=0,
-    center_y=0,
-    num_points=3000
-)
-
-doc = _generate_template_pdf(points, offset_points(points, 1))
+a = 6
+points = np.array([[a, -a], [a, a], [-a, -a]])
+offset_pts = offset_points(points, 1)
+doc = _generate_template_pdf(points, offset_pts)
 doc.save("Square Test.pdf")
 doc.close()
