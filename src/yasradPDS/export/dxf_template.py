@@ -6,7 +6,7 @@ Points and allowances are in metres; DXF coordinates are in millimetres
 import ezdxf
 import numpy as np
 import matplotlib.pyplot as plt
-
+from yasradPDS.geometries.semi_elipsoid import SemiElipsoid
 ##
 
 def build_system_template(
@@ -77,17 +77,14 @@ def export_dxf(points: np.ndarray, path: str, allowance_m: float = 0.0, preview:
         cut_points = add_hem_allowance(cut_points, allowance_m)
     if preview:
         preview_outline(cut_points)
-        decision = input(print("Enter 1 to Save 2 to cancel"))
-        if(decision == '1'):
-            save_outline_dxf(cut_points, path)
-        else: return
-
+        decision = input("Enter 1 to Save 2 to cancel: ").strip()
+        if(decision != '1'):
+            return
+    
     save_outline_dxf(cut_points, path)
 
 #test case
 if __name__ == "__main__":
-    from yasradPDS.geometries.semi_elipsoid import SemiElipsoid
-
     geometry = SemiElipsoid()
 
     test_points = geometry.getDXFpoints(
