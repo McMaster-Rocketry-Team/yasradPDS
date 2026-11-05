@@ -7,6 +7,18 @@ import ezdxf
 import numpy as np
 import matplotlib.pyplot as plt
 
+##
+
+def build_system_template(
+        system,
+        stage: int,
+        path: str,
+        allowance_m : float,
+        preview: bool = False,) -> None:
+    
+    points = system.get(stage , "gore_outline")
+    export_dxf(points, path , allowance_m, preview)
+
 ##important this assumes geometry uses a np.ndarray with ordered (x,y)
 def save_outline_dxf(points: np.ndarray, path: str) -> None:
     """Save ordered (x, y) gore points, supplied in metres, as a DXF outline."""
@@ -58,16 +70,40 @@ def preview_outline(points: np.ndarray) -> None:
     plt.close(fig)
 
 
-def build_template(points: np.ndarray, path: str, allowance_m: float = 0.0, preview: bool = False,) -> None:
+def export_dxf(points: np.ndarray, path: str, allowance_m: float = 0.0, preview: bool = False,) -> None:
     """Add an optional allowance, save the DXF, and optionally preview it."""
     cut_points = np.asarray(points, dtype=float)
     if allowance_m != 0:
         cut_points = add_hem_allowance(cut_points, allowance_m)
-
-    save_outline_dxf(cut_points, path)
     if preview:
         preview_outline(cut_points)
+        decision = input(print("Enter 1 to Save 2 to cancel"))
+        if(decision == '1'):
+            save_outline_dxf(cut_points, path)
+        else: return
 
+    save_outline_dxf(cut_points, path)
+
+#test case
+if __name__ == "__main__":
+    from yasradPDS.geometries.semi_elipsoid import SemiElipsoid
+
+    geometry = SemiElipsoid()
+
+    test_points = geometry.getDXFpoints(
+        n=8,                  # Number of gores
+        chute_diameter=2.0,   # Metres
+        chute_height=1.0,     # Metres
+        vent_diameter=0.1,    # Metres
+    )
+
+    export_dxf(
+        test_points,
+        "gore_test.dxf",
+        allowance_m=0.008,    # 8 mm
+        preview=True,
+    )    
+"""
 #small test case
 if __name__ == "__main__":
     # A 100 mm wide, 200 mm tall rectangle, with points in metres.
@@ -79,10 +115,11 @@ if __name__ == "__main__":
     ])
 
     # Adding 8 mm on every side makes the cut outline 116 mm by 216 mm.
-    build_template(
+    export_dxf(
         test_points,
         "outline_test.dxf",
         allowance_m=0.008,
         preview=True,
     )
     print("Saved outline_test.dxf (expected size: 116 mm by 216 mm)")
+"""
