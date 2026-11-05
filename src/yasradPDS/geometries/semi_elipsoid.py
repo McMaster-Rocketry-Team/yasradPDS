@@ -75,16 +75,16 @@ class SemiElipsoid(Geometry):
         # table of "distance along the curve" versus t, and invert it afterwards.
 
         # Fine pass: cumulative arc length of the profile as a function of t.
-        # 4000 samples is far finer than the output density, so treating each tiny
+        # 40000 samples is far finer than the output density, so treating each tiny
         # piece of the curve as a straight line is accurate enough for our purposes.
-        t_fine = np.linspace(0, t_max, 4000)
+        t_fine = np.linspace(0, t_max, 40000)
 
         # the (r, z) position on the ellipse at each of those fine t values
         r_fine = a * np.cos(t_fine)
         z_fine = b * np.sin(t_fine)
 
         # seg[i] is the straight-line length between sample i and i+1 (pythagoras on
-        # the r and z steps). a running sum of those gives the arc length s from the
+        # the r and z steps). a running total of those gives the arc length s from the
         # bottom edge (t = 0) up to each sample, with s = 0 at the start. s_fine ends
         # at total_len, the full length of the canopy profile from edge to vent.
         seg = np.hypot(np.diff(r_fine), np.diff(z_fine))
@@ -97,6 +97,7 @@ class SemiElipsoid(Geometry):
         # of points. max(2, ...) makes sure we always have at least a start and an
         # end point.
         num_pts = max(2, math.ceil(total_len * POINTS_PER_METER))
+        
         # np.interp(x, xp, fp) looks up t for each requested arc length: we ask for
         # num_pts evenly spaced distances from 0 to total_len, and it reads off the
         # t that gives each of those distances from the (s_fine -> t_fine) table.
