@@ -39,7 +39,7 @@ class _Line:
 class Stage:
     _geometry: Geometry # geometry solver object
     CD: float
-    FOS: float = 2 # replace with FOS from defaults
+    FOS: float = 2 # replace with FOS from defaults, used for opening shocks
 
     # knowns
     name: str
@@ -57,13 +57,15 @@ class Stage:
     max_shock_upper: float # N
     max_shock_lower: float # N
     fabric_density: float # kg/m^2
-    porosity: float
 
     # unknowns
     main_diameter: float | None = None # m
     spill_hole_diameter: float | None = None # m
     area: float | None = None # m^2
     fill_time: float | None = None # s
+    actual_shock_upper: float | None = None # N
+    actual_shock_lower: float | None = None # N
+    canopy_mass: float | None = None # kg
     gore_outline: ndarray | None = None # array of function points for pdf/dxf exports
     
     _NON_ZERO_PARAMS = ("target_velocity", "mass_upper", "mass_lower",
