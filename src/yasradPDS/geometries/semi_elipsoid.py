@@ -1,8 +1,8 @@
 from .geometry import Geometry, register
 import math
 import numpy as np
-from yasradPDS.config.defaults import POINTS_PER_METER
-from yasradPDS.config.defaults import SEMI_ELIPSOID_CD0
+from yasradPDS.config.defaults import POINTS_PER_METER, SEMI_ELIPSOID_CD
+
 
 
 @register("semi_elipsoid")
@@ -11,24 +11,11 @@ class SemiElipsoid(Geometry):
     # no __init__: a SemiElipsoid holds no dimensions, it is just the solver for
     # this shape. the dimensions come in through each method call.
 
-    def getCD(self, chute_diameter: float, chute_height: float, vent_diameter: float) -> float:
+    def getCD(self) -> float:
         """
-        Calculates the drag coefficient (Cd) of a semi-ellipsoid parachute
-        based on its apex vent sizing. There is height parameter given because some other geometries might need it
+        Returns the drag coefficient (Cd) of a semi-ellipsoid parachute
         """
-        if chute_diameter <= 0:
-            return 0.0
-            
-        # Calculate the Vent Area Ratio (equivalent to diameter ratio squared)
-        vent_area_ratio = (vent_diameter / chute_diameter) ** 2
-        
-        # Calculate degraded Cd
-        
-        #this equation seems to be an industry standard; the most famous book on this whole subject, PARACHUTE Recovery Systems Desgin Manual, shows that because of loss of apex pressure, the drag decreases at a rate more than 1, which works out to about 1.2. it is really frustrating to try to find concrete sources, but this book seems to be the best. 
-        cd = SEMI_ELIPSOID_CD0 * (1.0 - 1.2 * vent_area_ratio)
-        
-        # Ensure Cd doesn't drop below logical limits for extreme vent sizes
-        return max(cd, 0.1)
+        return SEMI_ELIPSOID_CD
 
     def getDXFpoints(self, n: int, chute_diameter: float, chute_height: float, vent_diameter: float) -> np.ndarray:
         """Return a closed loop of (x, y) points (in meters) outlining one gore,

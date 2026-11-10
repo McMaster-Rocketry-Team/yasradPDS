@@ -11,11 +11,8 @@ POINTS_PER_METER = 1181
 
 
 
-SEMI_ELIPSOID_CD0 = 1.55
-# the baseline unvented drag coefficient CD0 is chosen as the median of industry-standard semi-ellipsoidal 
-# parachute profiles, which empirically demonstrate steady-state drag coefficients between 1.5 and 1.6
-# relative to projected inflated area (e.g., Fruity Chutes Classic Elliptical, Cd = 1.6; 
-# Nakka Aerodynamic Studies, Cd = 1.5.
+SEMI_ELIPSOID_CD = 1.6
+#industry standard for semi-ellipsoid drag coefficient, used for drogue and main parachutes.
 
 
 
