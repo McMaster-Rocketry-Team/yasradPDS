@@ -9,7 +9,6 @@ from yasradPDS.geometries.geometry import Geometry, new_geometry
 from yasradPDS.utils.atmosphere import LaunchSite
 
 SPILL_HOLE_RATIO =  0.2
-g = 9.81
 
 @register("dual_deploy")
 class DualDeploySystem(System):
@@ -25,7 +24,10 @@ class DualDeploySystem(System):
 
     def _solve(self) -> None:
         """Solves for unknowns upon initialization"""
-        
+
+        if (self._main.is_existing):
+            # know diameters, shroud line lengths
+            pass
         
         # Code goes here, add extra helper methods as needed
 
