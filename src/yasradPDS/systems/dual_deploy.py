@@ -24,7 +24,10 @@ class DualDeploySystem(System):
 
     def _solve(self) -> None:
         """Solves for unknowns upon initialization"""
-        
+
+        if (self._main.is_existing):
+            # know diameters, shroud line lengths
+            pass
         
         # Code goes here, add extra helper methods as needed
 
