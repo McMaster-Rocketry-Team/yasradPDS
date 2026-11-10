@@ -1,8 +1,8 @@
 # lays out the printable PDF gore pattern / template at true scale from the
 # system's canopy geometry
 
-from ..systems.system import System
-from ..utils.constants import PdfConstants as consts
+from yasradPDS.systems.system import System
+from yasradPDS.utils.constants import PdfConstants as consts
 
 
 import math
@@ -17,11 +17,11 @@ BOUNDING_BOX_LINEWEIGHT : float = 0.5
 
 #Use system to generate export
 
-def pdf_export(sys : System, stage : int, name : str): #Remove points post testing
+def pdf_export(sys : System, stage : int, file_name : str): #Remove points post testing
     points : np.ndarray = sys.get(stage, "gore_outline")*39.3700787 #Meter to inches conversion
     allowance_points = offset_points(points, consts.ALLOWANCE)
     pdf = _generate_template_pdf(points, allowance_points, consts.PAGE_SAFE_MARGIN, consts.PAGE_WIDTH, consts.PAGE_HEIGHT)
-    pdf.save(name + ".pdf")
+    pdf.save(file_name + ".pdf")
     pdf.close()
 
 
