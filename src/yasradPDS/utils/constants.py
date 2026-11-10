@@ -1,6 +1,9 @@
 # fixed physical constants (gravity, gas constant, standard sea level values)
 
-
+class PhysicalConstants:
+    G = 9.81
+    BASE_RHO = 1.225 # kg/m^3 air density at sea level
+    BASE_TEMP = 228.15 # K at sea level
 
 """PDF Export Constants"""
 class PdfConstants:

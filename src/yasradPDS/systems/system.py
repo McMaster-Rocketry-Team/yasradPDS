@@ -109,6 +109,7 @@ class Stage:
                 raise ValueError(f"{self.name}: main diameter must be > 0")
             if self.spill_hole_diameter < 0:
                 raise ValueError(f"{self.name}: spill hole diameter must be >= 0")
+            # shroud line length
 
         self._geometry = new_geometry(self.geometry)
         self.CD = self._geometry.getCD()

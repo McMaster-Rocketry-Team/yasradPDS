@@ -9,7 +9,6 @@ from yasradPDS.geometries.geometry import Geometry, new_geometry
 from yasradPDS.utils.atmosphere import LaunchSite
 
 SPILL_HOLE_RATIO =  0.2
-g = 9.81
 
 @register("dual_deploy")
 class DualDeploySystem(System):
