@@ -1,4 +1,5 @@
 # all physics lives here
+<<<<<<< HEAD
 from .constants import PhysicalConstants as const
 
 class Physics:
@@ -8,3 +9,7 @@ class Physics:
     def air_density():
         """Based on ISA model"""
         
+=======
+
+import math
+>>>>>>> origin/main
