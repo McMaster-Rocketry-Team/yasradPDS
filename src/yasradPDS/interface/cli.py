@@ -13,9 +13,9 @@ climage for yasradPDS iamge
 TODO:
 - Fill the dropdown from _MODELS. Using sorted(atm._MODELS) for the choices keeps the GUI in step if you add a model later. If you'd rather not reach into a private name from the GUI, drop the leading underscore and call it MODELS.
 - Convert GUI text before calling build(). Text fields give you strings, so convert them first:
-  - for forecast/ensemble, turn the date into a datetime
+  - for forecast, turn the date into a datetime
   - for custom, turn the wind into a float, or into a list of (height ASL, m/s) pairs for a profile
-- Show only the fields for the chosen model. standard needs only the site. custom needs the two wind values. forecast/ensemble need a date, and the source is optional. Anything extra gets passed to the model's function, which will raise a TypeError.
+- Show only the fields for the chosen model. standard needs only the site. custom needs the two wind values. forecast needs a date, and the source is optional. Anything extra gets passed to the model's function, which will raise a TypeError.
 - Heights in a wind profile are above sea level, not above the launch pad. Either label the field clearly or let users enter heights above ground and run them through atm.asl() before calling build().
 """
 
@@ -28,15 +28,33 @@ def cli():
     # SRAD Parachute Design System
     pass
 
+DEFAULT_CONFIG = "system.json"
+
 @cli.command()
 def config():
     from yasradPDS.interface.dual_deploy_gui import prompt_inputs
-    inputs = prompt_inputs()
-    if inputs is None:
+    # the GUI's Save button picks the file and writes it
+    if prompt_inputs() is None:
         click.echo("No changes made.")
         return
-    click.echo(f"Got: {inputs}")
-    # TODO: update and save design inputs into system object
+    click.echo("Inputs saved.")
+
+@cli.command("create-system")
+@click.option("-i", "path", default = DEFAULT_CONFIG, show_default = True, type = click.Path(exists = True, dir_okay = False), help = "Inputs saved by config")
+@click.option("--show", is_flag = True, help = "Print every stage's values after building.")
+def create_system(path, show):
+    import json
+    from yasradPDS.systems.system import new_system
+    with open(path) as f:
+        inputs = json.load(f)
+    name = inputs.pop("name", "") # System doesn't take name so remove it from the json
+    try:
+        system = new_system("dual_deploy", **inputs)
+    except (TypeError, ValueError) as e:
+        raise click.ClickException(str(e))
+    click.echo(f"Created system {name!r} with {system.stage_count} stages")
+    if show:
+        click.echo(system)
 
 @cli.command()
 @click.option("--preview", is_flag = True, help = "Matplotlib preview.")

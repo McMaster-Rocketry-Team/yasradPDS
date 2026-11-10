@@ -3,11 +3,14 @@
 # NOTE: Environment functions (env.density(h), env.wind_velocity_x(h), ...)
 # take height ASL. Stage.deploy_altitude and RocketPy parachute
 # trigger heights are AGL. Convert with asl(env, h) before lookups.
+# NOTE: Removed RocketPy ensemble since its dataset is disabled. Can make our own ensemble if we have our own dataset.
 
+import math
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Callable
 
+import pytz
 from rocketpy import Environment
 
 WindProfile = float | list[tuple[float, float]]  # constant m/s, or [(h_asl_m, m/s), ...]
@@ -21,6 +24,9 @@ class LaunchSite:
     timezone: str = "UTC"
 
     def __post_init__(self):
+        pytz.timezone(self.timezone)  # raises UnknownTimeZoneError on a bad name
+        if not math.isfinite(self.elevation):
+            raise ValueError(f"{self.name}: elevation must be finite, got {self.elevation}")
         if not -90 <= self.latitude <= 90:
             raise ValueError(f"{self.name}: latitude must be in [-90, 90], got {self.latitude}")
         if not -180 <= self.longitude <= 180:
@@ -38,7 +44,7 @@ def asl(ref: LaunchSite | Environment, h_agl: float) -> float:
     """
     Convert height above ground level to above sea level (m).
 
-    Pass the Environment for lookups: forecast/ensemble replace the elevation
+    Pass the Environment for lookups: forecast replaces the elevation
     with the weather model's own ground height. Pass the LaunchSite only when
     building a custom wind profile, before the Environment exists.
     """
@@ -80,17 +86,10 @@ def forecast(site: LaunchSite, date: datetime, source: str = "GFS") -> Environme
     env.set_atmospheric_model(type="Forecast", file=source)
     return env
 
-def ensemble(site: LaunchSite, date: datetime, source: str = "GEFS") -> Environment:
-    """Ensemble forecast, wrap in rocketpy.StochasticEnvironment for Monte Carlo."""
-    env = _base(site, date)
-    env.set_atmospheric_model(type="Ensemble", file=source)
-    return env
-
 _MODELS: dict[str, Callable[..., Environment]] = {
     "standard": standard,
     "custom": custom_wind,
     "forecast": forecast,
-    "ensemble": ensemble,
 }
 
 def build(site: LaunchSite, model: str = "standard", **kwargs) -> Environment:
