@@ -17,14 +17,4 @@ SEMI_ELIPSOID_CD0 = 1.55
 # relative to projected inflated area (e.g., Fruity Chutes Classic Elliptical, Cd = 1.6; 
 # Nakka Aerodynamic Studies, Cd = 1.5.
 
-
-
-"""Launch details"""
-#Coordinates of launch site
-LAUNCH_LATTITUDE : float
-LAUNCH_LONGITUDE : float
-#Must be in the form of (year, month, day, hour-UTC)
-DATE : tuple
-
-
-"""Descent Analysis Defaults"""
+FILE_PATH : str = ""

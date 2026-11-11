@@ -3,7 +3,7 @@
 
 from yasradPDS.systems.system import System
 from yasradPDS.utils.constants import PdfConstants as consts
-
+from yasradPDS.config.defaults import FILE_PATH
 
 import math
 import pymupdf as pdf
@@ -17,11 +17,13 @@ BOUNDING_BOX_LINEWEIGHT : float = 0.5
 
 #Use system to generate export
 
-def pdf_export(sys : System, stage : int, file_name : str): #Remove points post testing
+def pdf_export(sys : System, stage : int, file_name : str | None = None): #Remove points post testing
+    """Generates the parachute PDF stitching templates for the stage in system. if a file_name is provided, it is saved to default path with that name """
     points : np.ndarray = sys.get(stage, "gore_outline")*39.3700787 #Meter to inches conversion
     allowance_points = offset_points(points, consts.ALLOWANCE)
     pdf = _generate_template_pdf(points, allowance_points, consts.PAGE_SAFE_MARGIN, consts.PAGE_WIDTH, consts.PAGE_HEIGHT)
-    pdf.save(file_name + ".pdf")
+    if file_name:
+        pdf.save(file_name + ".pdf")
     pdf.close()
 
 
