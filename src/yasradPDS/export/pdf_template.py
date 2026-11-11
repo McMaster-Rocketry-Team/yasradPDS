@@ -23,7 +23,7 @@ def pdf_export(sys : System, stage : int, file_name : str | None = None): #Remov
     allowance_points = offset_points(points, consts.ALLOWANCE)
     pdf = _generate_template_pdf(points, allowance_points, consts.PAGE_SAFE_MARGIN, consts.PAGE_WIDTH, consts.PAGE_HEIGHT)
     if file_name:
-        pdf.save(file_name + ".pdf")
+        pdf.save(FILE_PATH + file_name + ".pdf")
     pdf.close()
 
 
