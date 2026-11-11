@@ -46,6 +46,7 @@ class Stage:
     is_existing: bool = False
     geometry: str
     gore_count: int
+    porosity: float # this gave an error, for the __post_init__ for whoever removed it, readded for CLI testing
     deploy_altitude: float # m
     deploy_velocity: float # m/s
     target_velocity: float # m/s
@@ -105,6 +106,9 @@ class Stage:
             raise ValueError(f"{self.name}: shroud.count must be >= 3")
 
         if self.is_existing:
+            # Gets rid of the None error with the operation <=.
+            if self.main_diameter is None or self.spill_hole_diameter is None:
+                raise ValueError(f"{self.name}: an existing parachute needs main_diameter and spill_hole_diameter")
             if self.main_diameter <= 0:
                 raise ValueError(f"{self.name}: main diameter must be > 0")
             if self.spill_hole_diameter < 0:
@@ -145,6 +149,20 @@ class System(ABC):
                     f"{a.total_mass} vs {b.total_mass} kg"
                 )
         self._solve()
+
+    def __str__(self) -> str:
+        """Every stage's fields, unknowns shown as None. For checking a system was built right."""
+        out = [type(self).__name__]
+        for stage in self._stage_list:
+            out.append(f"[{stage.name}]")
+            for f in fields(stage):
+                if f.name.startswith("_") or f.name == "name":
+                    continue
+                value = getattr(stage, f.name)
+                if isinstance(value, ndarray):
+                    value = f"array, shape {value.shape}" # full outline is too long to print
+                out.append(f"  {f.name}: {value}")
+        return "\n".join(out)
 
     @property
     def stage_count(self) -> int:

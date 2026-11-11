@@ -18,11 +18,11 @@ class Geometry(ABC):
     # method as a parameter, so the same instance can be reused for any chute size.
 
     #any chute design will have area implemented the same, a diameter, and a vent diameter (could change for torroidal chute, but )
-    def getArea(self, chute_diameter: float) -> float:
+    def getArea(self, chute_diameter: float, vent_diameter: float) -> float:
         """Canopy area in m^2. Diameters in m."""
         """the reason this is in the base class is that the canopy area basically just reffers to the collumn(ish shape) of air underneath the chute."""
-        """Cd accounts for vent size"""
-        return (chute_diameter/2)**2 * math.pi
+        
+        return (chute_diameter/2)**2 * math.pi - (vent_diameter/2)**2 * math.pi
     # ---------------------------------------------------------------------
 
     # per-geometry interface goes here: one @abstractmethod for each thing
@@ -30,7 +30,7 @@ class Geometry(ABC):
 
 
     @abstractmethod
-    def getCD(self, chute_diameter: float, chute_height: float, vent_diameter: float) -> float:
+    def getCD(self) -> float:
         """Return the drag coefficient for this geometry. Dimensions in m."""
         pass
     #get cd baseline fropm config defaults
