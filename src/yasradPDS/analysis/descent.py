@@ -1,20 +1,21 @@
 # rocketpy assisted descent calculations (altitude/velocity-time sims) 
 
 import math
-from datetime import datetime
+from datetime import date, timedelta, datetime
 from rocketpy import Environment, PointMassRocket, Flight, Rocket
-from systems.system import System
-from utils.atmosphere import LaunchSite, forecast
+from yasradPDS.systems.system import System
+from yasradPDS.utils.atmosphere import LaunchSite, forecast, standard
+from yasradPDS.geometries.geometry import Geometry
+from yasradPDS.config.defaults import FILE_PATH
+from matplotlib import pyplot as plt
 
 
+import numpy as np
 #For the assumption that the rocket is a point mass, Radius can be anything and the rest are all 0
-ROCKET_MAX_RADIUS : float = 0 #m
+ROCKET_MAX_RADIUS : float = 1 #m
 ROCKET_BURN_CD = 0 
 ROCKET_OFF_CD = 0
 COM_NO_MOTOR = 0 #Distance from rocket coordinate system orgin
-
-
-
 
 #For a pure descent test, these are ignored
 RAIL_LENGTH : float = 0
@@ -28,10 +29,54 @@ APOGEE = 10000
 
 
 
-
-def get_descent_3_DOF(sys : System, launch_site : LaunchSite, date : datetime) -> Flight:
+def descent_analysis(sys : System, site : LaunchSite, date : datetime, file_name : str | None = None):
     """
     Returns a rocketpy flight object for the system dropped from apogee containing all descent kinematics data.
+    
+    Note: RocketPy does consider the coriolis effect so a slight horizontal drift is expected
+    """
+    descent = get_descent_flight_3_DOF(sys=sys, site=site, date=date)
+    timeAltitdue = np.array(descent.z)
+    timeVelocity = np.array(descent.vz)
+    timeAccel = np.array(descent.az)
+
+    #Plotting the alt, v, and a vertically stacked
+    fig, z = plt.subplots(3, 1)
+    
+    altitudeHeader = ["Time (s)", "Altitude ASL (m)"]
+    z[0].set_title("Altitude after apogee until impact")
+    z[0].set_ylabel("Altitude ASL (m)")
+    z[0].set_xlabel("Time After Apogee (s)")
+    z[0].plot(timeAltitdue[:, 0], timeAltitdue[:, 1])
+
+    velocityHeader = ["Time (s)", "Vertical Velocity"]
+    z[1].set_title("Vertical velocity after apogee until impact")
+    z[1].set_ylabel("Z - Velocity (m/s)")
+    z[1].set_xlabel("Time After Apogee (s)")
+    z[1].plot(timeVelocity[:, 0], timeVelocity[:, 1])
+    z[1].yaxis.set_inverted(True)
+
+    accelHeader = ["Time (s)", "Vertical Accel"]
+    z[2].set_title("Vertical acceleration after apogee until impact")
+    z[2].set_ylabel("Z - Acceleration (m/s^2)")
+    z[2].set_xlabel("Time After Apogee (s)")
+    z[2].plot(timeAccel[:, 0], timeAccel[:, 1])
+    plt.subplots_adjust(hspace=0.6, wspace=0.6)
+    plt.show()
+
+    if file_name is not None:
+        vertStack = np.vstack((altitudeHeader, timeAltitdue, velocityHeader, timeVelocity, accelHeader, timeVelocity))
+        file = open(file=str(FILE_PATH + "/" + file_name +".csv"), mode="w")
+        for i in vertStack:
+            file.write(",".join(map(str, i)) + "\n")
+        file.close()
+
+
+def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -> Flight:
+    """
+    Returns a rocketpy flight object for the system dropped from apogee containing all descent kinematics data.
+
+    Note: RocketPy does consider the coriolis effect so a slight horizontal drift is expected
     """
     #Get Mass of rocket
     mass = 0
@@ -53,24 +98,20 @@ def get_descent_3_DOF(sys : System, launch_site : LaunchSite, date : datetime) -
     for i in range(sys.stage_count):
         chute_name = sys.get(i, "name")
         radius = sys.get(i, "main_diameter")/2
-
-
-        ####Check to see if im doing this right, as im acsessing private variables and doing thing
-        cd_s = sys._stage_list[i].CD * radius**2 * (math.pi)
-        ####
-
+        cd_s = sys.get(i, "CD") * sys.get(i, "area")
         trigger_altitude = sys.get(i, "deploy_altitude")
         fill_time = sys.get(i, "fill_time")
         rocket.add_parachute(name=chute_name, cd_s = cd_s, trigger=trigger_altitude, radius=radius, lag= fill_time)
 
-    env : Environment = forecast(launch_site=launch_site, date=date)
+    env : Environment = standard(launch_site=site, date=date)
 
+    #initial_solution for Flight simulation, we simulate the rocket as if it is not in motion at apogee. Everything 
     initial_state : list = [
     0, #Initial Time
     0, 0, APOGEE, #x, y, z
     0, 0, 0, #Velocity Components
-    1, 0, 0, 0, #Quaternion Rotations
-    0, 0, 0 #Angular velocities
+    1, 0, 0, 0, #Quaternion Rotations - Irrelevant for 3dof
+    0, 0, 0 #Angular velocities - Irrelevant for 3dof
 ]
 
     descent : Flight = Flight(
@@ -78,24 +119,27 @@ def get_descent_3_DOF(sys : System, launch_site : LaunchSite, date : datetime) -
         rail_length= RAIL_LENGTH,
         environment=env,
         initial_solution=initial_state,
-        simulation_mode="3 DOF"
+        simulation_mode="3 DOF",
+        max_time_step= 1,
+        max_time=600
     )
     return descent
 
 
 
 
-"""Testing stuff ########################"""
-env = Environment(latitude=32.990254, longitude=-106.974998, elevation=1400)
+"""Testing stuff ##########################################################################################################################"""
 
-tomorrow = datetime.date.today() + datetime.timedelta(days=1)
-env.set_date(
-    (tomorrow.year, tomorrow.month, tomorrow.day, 12)
-)  # Hour given in UTC time
-#Define rocket
+
+tdy = datetime.today()
+
+tomorrow = tdy + timedelta(days=1)
+
+lc = LaunchSite(name="Launch Canada", latitude=47.99, longitude=-85.85, elevation=364)
+
 rocket : PointMassRocket = PointMassRocket(
         radius = ROCKET_MAX_RADIUS,
-        mass= 35,
+        mass= 13,
         center_of_mass_without_motor=COM_NO_MOTOR,
         power_off_drag=ROCKET_OFF_CD,
         power_on_drag=ROCKET_BURN_CD
@@ -108,18 +152,19 @@ rocket.add_parachute(
 
 rocket.add_parachute(
     name="drogue",
-    cd_s = 1.0,
+    cd_s = 3.0,
     trigger = "apogee"
 )
 #In meters
-expected_apogee = env.elevation + 9144
+
+env = standard(lc)
 
 #Pass into simulation object, 14 element vector
 apogee = [
     0, 
-    0, 0, expected_apogee,
+    0, 0, 10000,
     0, 0, 0,
-    1, 0, 0, 0,
+    0, 0, 0, 0,
     0, 0, 0
 ]
 
@@ -129,7 +174,42 @@ descent : Flight = Flight(
     initial_solution=apogee,
     rail_length=1,
     simulation_mode= "3 DOF",
-    max_time=600
+    max_time_step= 1,
+    max_time=5000
 )
-descent.plots.trajectory_3d()
-descent.plots.linear_kinematics_data()
+
+timeAltitdue = np.array(descent.z)
+timeVelocity = np.array(descent.vz)
+timeAccel = np.array(descent.az)
+
+fig, z = plt.subplots(3, 1)
+
+altitudeHeader = ["Time (s)", "Altitude ASL (m)"]
+z[0].set_title("Altitude after apogee until impact")
+z[0].set_ylabel("Altitude ASL (m)")
+z[0].set_xlabel("Time After Apogee (s)")
+z[0].plot(timeAltitdue[:, 0], timeAltitdue[:, 1])
+
+velocityHeader = ["Time (s)", "Vertical Velocity"]
+z[1].set_title("Vertical velocity after apogee until impact")
+z[1].set_ylabel("Z - Velocity (m/s)")
+z[1].set_xlabel("Time After Apogee (s)")
+z[1].plot(timeVelocity[:, 0], timeVelocity[:, 1])
+z[1].yaxis.set_inverted(True)
+
+accelHeader = ["Time (s)", "Vertical Accel"]
+z[2].set_title("Vertical acceleration after apogee until impact")
+z[2].set_ylabel("Z - Acceleration (m/s^2)")
+z[2].set_xlabel("Time After Apogee (s)")
+z[2].plot(timeAccel[:, 0], timeAccel[:, 1])
+plt.subplots_adjust(hspace=0.6, wspace=0.6)
+plt.show()
+
+file_name = "descent"
+f = "C:/Users/felix/Documents/Rocketry 2026-2027/yasradPDS/src/yasradPDS/analysis/"
+if file_name is not None:
+    vertStack = np.vstack((altitudeHeader, timeAltitdue, velocityHeader, timeVelocity, accelHeader, timeVelocity))
+    file = open(file=str(f + file_name +".csv"), mode="w")
+    for i in vertStack:
+        file.write(",".join(map(str, i)) + "\n")
+    file.close()
