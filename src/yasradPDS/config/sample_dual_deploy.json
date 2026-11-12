@@ -1,0 +1,68 @@
+{
+  "name": "Sample Dual Deploy",
+  "drogue": {
+    "geometry": "semi_elipsoid",
+    "gore_count": 6,
+    "fabric_density": 0.04,
+    "porosity": 0.05,
+    "deploy_altitude": 3000.0,
+    "deploy_velocity": 20.0,
+    "target_velocity": 25.0,
+    "mass_upper": 10.0,
+    "mass_lower": 12.0,
+    "max_shock_upper": 2000.0,
+    "max_shock_lower": 2000.0,
+    "main_diameter": 0.6,
+    "spill_hole_diameter": 0.12,
+    "cord_upper": {
+      "length": 5.0,
+      "density": 0.03,
+      "break_strength": 6000.0,
+      "max_epsilon": 0.05
+    },
+    "cord_lower": {
+      "length": 5.0,
+      "density": 0.03,
+      "break_strength": 6000.0,
+      "max_epsilon": 0.05
+    },
+    "shroud": {
+      "length": 0.9,
+      "density": 0.006,
+      "break_strength": 2400.0,
+      "max_epsilon": 0.3
+    },
+    "is_existing": true
+  },
+  "main": {
+    "geometry": "semi_elipsoid",
+    "gore_count": 12,
+    "fabric_density": 0.04,
+    "porosity": 0.05,
+    "deploy_altitude": 450.0,
+    "deploy_velocity": 25.0,
+    "target_velocity": 6.0,
+    "mass_upper": 10.0,
+    "mass_lower": 12.0,
+    "max_shock_upper": 2000.0,
+    "max_shock_lower": 2000.0,
+    "cord_upper": {
+      "length": 8.0,
+      "density": 0.03,
+      "break_strength": 6000.0,
+      "max_epsilon": 0.05
+    },
+    "cord_lower": {
+      "length": 8.0,
+      "density": 0.03,
+      "break_strength": 6000.0,
+      "max_epsilon": 0.05
+    },
+    "shroud": {
+      "density": 0.006,
+      "break_strength": 2400.0,
+      "max_epsilon": 0.3
+    },
+    "is_existing": false
+  }
+}

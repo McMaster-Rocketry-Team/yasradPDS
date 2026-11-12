@@ -1,0 +1,99 @@
+yasradPDS - CLI and GUI usage
+=============================
+
+SETUP
+-----
+From the repo folder, with the virtual environment active:
+
+    pip install -e .
+
+This installs the "yasradPDS" command. Check it with:
+
+    yasradPDS --version
+    yasradPDS --help
+
+Each command also takes --help, e.g. "yasradPDS create-system --help".
+
+
+WORKFLOW
+--------
+1. yasradPDS config          enter inputs in the GUI, Save them to a .json file
+2. yasradPDS create-system   build the dual deploy system from that .json file
+
+Every command runs on its own, so the .json file is what carries your inputs
+from one command to the next.
+
+
+COMMANDS
+--------
+yasradPDS config
+    Opens the dual deploy GUI. Prints "Inputs saved." if you saved,
+    or "No changes made." if you closed the window without saving.
+
+yasradPDS create-system [-i FILE]
+    Reads a saved .json file and builds a dual deploy system from it.
+    -i FILE   inputs file to read (default: system.json in the current folder)
+    --show    print every stage's values after building, including the
+              solved unknowns (None means not solved yet)
+    Prints "Created system '<name>' with 2 stages", or "Error: ..." explaining
+    what is wrong with the inputs.
+
+yasradPDS analyze [--preview]
+    Not implemented yet.
+
+yasradPDS export {csv|pdf|dxf} -o FILE
+    Not implemented yet.
+
+
+THE GUI
+-------
+GENERAL
+    NAME     name of the design (saved in the file, not used by the system)
+
+DROGUE and MAIN tabs (same fields on each)
+    CANOPY                    geometry (e.g. semi_elipsoid), gore count (whole
+                              number, at least 3), fabric density (kg/m^2),
+                              porosity (0 to 1)
+    DEPLOYMENT                deploy altitude (m, above ground level), deploy
+                              velocity (m/s), target velocity (m/s)
+    MASSES AND SHOCK LIMITS   mass upper/lower (kg), max shock upper/lower (N)
+    EXISTING PARACHUTE        main diameter (m), spill hole diameter (m)
+    LINES                     cord upper, cord lower, shroud: length (m),
+                              density (kg/m), break strength (N),
+                              max epsilon (elongation at break, 0 to 1, 20% = 0.2)
+
+Optional fields
+    Main diameter, spill hole diameter and shroud length are marked (optional).
+    Leave them empty and the system solves them.
+    Fill in BOTH diameters to mark that parachute as existing (already made);
+    filling in only one is an error.
+
+Both stages must have the same total mass (upper + lower).
+
+Buttons
+    Save     checks every field, asks where to save the .json file, writes it,
+             and closes the window. Cancel the dialog to keep editing.
+    Import   loads a .json file into the fields. Optional fields the file
+             leaves out are cleared. Values are checked when you Save.
+
+If a field is wrong, Save shows an error and switches to the tab with the problem.
+
+
+INPUT FILE
+----------
+A sample with one existing parachute (drogue) and one to be sized (main):
+
+    src/yasradPDS/config/sample_dual_deploy.json
+
+Load it with Import in the GUI, or run:
+
+    yasradPDS create-system -i src/yasradPDS/config/sample_dual_deploy.json
+
+Layout of the file:
+    {
+      "name": "...",
+      "drogue": { ...stage fields..., "cord_upper": {...}, "cord_lower": {...},
+                  "shroud": {...}, "is_existing": true/false },
+      "main":   { same as drogue }
+    }
+"is_existing" is written by the GUI; you don't set it yourself.

@@ -14,14 +14,4 @@ POINTS_PER_METER = 1181
 SEMI_ELIPSOID_CD = 1.6
 #industry standard for semi-ellipsoid drag coefficient, used for drogue and main parachutes.
 
-
-
-"""Launch details"""
-#Coordinates of launch site
-LAUNCH_LATTITUDE : float
-LAUNCH_LONGITUDE : float
-#Must be in the form of (year, month, day, hour-UTC)
-DATE : tuple
-
-
-"""Descent Analysis Defaults"""
+FILE_PATH : str = ""
