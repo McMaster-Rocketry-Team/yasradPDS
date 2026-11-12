@@ -46,7 +46,7 @@ class DualDeploySystem(System):
             raise ValueError("main opening shock exceeds its limit, drogue is descending too fast")
 
         # Cd should be a constant value, not a function of dimensions
-        # Forget trying to alter the vent hole diam, just use the ratio provided
+        # We're using vent ratio provided
         # Shroud line lengths should be a ratio of main diam
 
     def _solve_main(self) -> None:
@@ -80,10 +80,15 @@ class DualDeploySystem(System):
         return self.get_opening_shock(stage.CD, stage.area, rho, velocity, x1)
 
     def _shock_limit(self, stage: Stage) -> float:
+        
         return min(stage.max_shock_upper, stage.max_shock_lower) / stage.FOS
 
     def _max_deploy_velocity(self, stage: Stage) -> float:
-        """Fastest the stage can open at without passing its shock limit (bisection, shock rises with velocity)"""
+        """Fastest the stage can open at without passing its shock limit (shock rises with velocity).
+        Uses a binary search to find the max velocity that doesn't exceed the shock limit, because
+        velocity is all tangled up in the X1 parameter and can't be solved for directly, so we iteratite 
+        between the guesses of 0.1m/s and 500m/s until we find the max velocity that doesn't exceed the shock limit.
+        we could probably do it in like 20, but 50 is round and why not."""
         limit = self._shock_limit(stage)
         low, high = 0.1, 500.0
         for _ in range(50):
@@ -93,8 +98,6 @@ class DualDeploySystem(System):
             else:
                 low = mid
         return low
-
-
 
     @staticmethod
     def get_terminal_velocity(mass: float, area: float, cd: float, air_density: float) -> float:
@@ -106,10 +109,6 @@ class DualDeploySystem(System):
         air_density is air density in kg/m^3 at a given altitude
         """
         return math.sqrt((2 * mass * g) / (air_density * area * cd))
-
-
-
-
 
     @staticmethod
     def get_area(mass: float, velocity: float, cd: float, air_density: float) -> float:
