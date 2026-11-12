@@ -11,20 +11,20 @@ from matplotlib import pyplot as plt
 
 
 import numpy as np
-#For the assumption that the rocket is a point mass, Radius can be anything and the rest are all 0
+
+#For the assumption that the rocket is a point mass, Radius only needs to be non zero for the analysis to run and the rest don't matter
 ROCKET_MAX_RADIUS : float = 1 #m
 ROCKET_BURN_CD = 0 
 ROCKET_OFF_CD = 0
 COM_NO_MOTOR = 0 #Distance from rocket coordinate system orgin
 
-#For a pure descent test, these are ignored
+#For a pure descent test, these are ignored, but still needed to create descent objects
 RAIL_LENGTH : float = 0
 RAIL_INCLINATION : float = 0
 
 
-#Apogee
+#Apogee, Where the rocket descends from
 APOGEE = 10000
-
 #For a pure descent from apogee
 
 
@@ -34,8 +34,16 @@ def descent_analysis(sys : System, site : LaunchSite, date : datetime, file_name
     Returns a rocketpy flight object for the system dropped from apogee containing all descent kinematics data.
     
     Note: RocketPy does consider the coriolis effect so a slight horizontal drift is expected
+    
+    If a file name is provided, a CSV file containing all data will be saved to FILE_PATH configured in defaults.py
     """
+    
+    
     descent = get_descent_flight_3_DOF(sys=sys, site=site, date=date)
+    descent.plots.trajectory_3d()
+
+
+    #Grabbing descent data for both matplotlib and csv export 
     timeAltitdue = np.array(descent.z)
     timeVelocity = np.array(descent.vz)
     timeAccel = np.array(descent.az)
@@ -64,6 +72,7 @@ def descent_analysis(sys : System, site : LaunchSite, date : datetime, file_name
     plt.subplots_adjust(hspace=0.6, wspace=0.6)
     plt.show()
 
+    
     if file_name is not None:
         vertStack = np.vstack((altitudeHeader, timeAltitdue, velocityHeader, timeVelocity, accelHeader, timeVelocity))
         file = open(file=str(FILE_PATH + "/" + file_name +".csv"), mode="w")
@@ -76,7 +85,7 @@ def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -
     """
     Returns a rocketpy flight object for the system dropped from apogee containing all descent kinematics data.
 
-    Note: RocketPy does consider the coriolis effect so a slight horizontal drift is expected
+    Note: RocketPy does consider the coriolis effect so a slight Eastward drift is expected
     """
     #Get Mass of rocket
     mass = 0
@@ -84,6 +93,7 @@ def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -
 
         mass += sys.get(i, "mass_lower") + sys.get(i, "mass_upper")
 
+    print(f"mass of rocket is {mass} kg")
 
     #Create rocket
     rocket : PointMassRocket = PointMassRocket(
@@ -93,6 +103,7 @@ def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -
         power_off_drag=ROCKET_OFF_CD,
         power_on_drag=ROCKET_BURN_CD
     )
+
 
     #Add chutes
     for i in range(sys.stage_count):
@@ -124,3 +135,7 @@ def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -
         max_time=600
     )
     return descent
+
+
+sampleSystem = System()
+
