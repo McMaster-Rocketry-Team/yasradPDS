@@ -7,4 +7,4 @@ class Physics:
 
     def air_density(h: float):
         """Based on ISA model"""
-        return const.BASE_AIR_DENSITY*(1 - h*const.LAPSE_RATE/const.BASE_TEMP)**(const.G*const.MM_AIR/(const.R*const.LAPSE_RATE) - 1)
+        return const.BASE_RHO*(1 - h*const.LAPSE_RATE/const.BASE_TEMP)**(const.G*const.MM_AIR/(const.R*const.LAPSE_RATE) - 1)
