@@ -37,8 +37,8 @@ class _Line:
 
 @dataclass(kw_only=True)
 class Stage:
-    _geometry: Geometry # geometry solver object
-    CD: float
+    _geometry: Geometry | None = None# geometry solver object
+    CD: float | None = None
     FOS: float = 2 # replace with FOS from defaults, used for opening shocks
 
     # knowns
