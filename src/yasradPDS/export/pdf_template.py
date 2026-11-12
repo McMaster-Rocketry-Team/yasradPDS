@@ -17,7 +17,7 @@ BOUNDING_BOX_LINEWEIGHT : float = 0.5
 
 #Use system to generate export
 
-def pdf_export(sys : System, stage : int, file_name : str | None = None): #Remove points post testing
+def pdf_export(sys : System, stage : int, file_name : str): #Remove points post testing
     """Generates the parachute PDF stitching templates for the stage in system. if a file_name is provided, it is saved to default path with that name """
     points : np.ndarray = sys.get(stage, "gore_outline")*39.3700787 #Meter to inches conversion
     allowance_points = offset_points(points, consts.ALLOWANCE)

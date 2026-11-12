@@ -8,7 +8,7 @@ class PhysicalConstants:
     MM_AIR = 0.0289644 # kg/mol
     R = 8.3144598 # Nm/molK
 
-"""PDF Export Constants"""
+#PDF Export Constants
 class PdfConstants:
     ALLOWANCE = 1
     PAGE_SAFE_MARGIN = 0.5 #In Inches
