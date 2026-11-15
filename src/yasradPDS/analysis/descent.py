@@ -91,7 +91,7 @@ def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -
     mass = 0
     for i in range(1):
 
-        mass += sys.get(i, "mass_lower") + sys.get(i, "mass_upper")
+        mass += sys.get(i, "total_mass")
 
     print(f"mass of rocket is {mass} kg")
 
@@ -137,5 +137,4 @@ def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -
     return descent
 
 
-sampleSystem = System()
 
