@@ -9,16 +9,6 @@ It's a lot easier to read compared to argparse and can easily add more cli comma
 climage for yasradPDS iamge
 """
 
-"""
-TODO:
-- Fill the dropdown from _MODELS. Using sorted(atm._MODELS) for the choices keeps the GUI in step if you add a model later. If you'd rather not reach into a private name from the GUI, drop the leading underscore and call it MODELS.
-- Convert GUI text before calling build(). Text fields give you strings, so convert them first:
-  - for forecast, turn the date into a datetime
-  - for custom, turn the wind into a float, or into a list of (height ASL, m/s) pairs for a profile
-- Show only the fields for the chosen model. standard needs only the site. custom needs the two wind values. forecast needs a date, and the source is optional. Anything extra gets passed to the model's function, which will raise a TypeError.
-- Heights in a wind profile are above sea level, not above the launch pad. Either label the field clearly or let users enter heights above ground and run them through atm.asl() before calling build().
-"""
-
 import click 
 #import climage
 
@@ -46,7 +36,10 @@ def create_system(path, show):
     import json
     from yasradPDS.systems.system import new_system
     with open(path) as f:
-        inputs = json.load(f)
+        try:
+            inputs = json.load(f)
+        except json.JSONDecodeError as e:
+            raise click.ClickException(f"{path} is not valid JSON: {e}")
     name = inputs.pop("name", "") # System doesn't take name so remove it from the json
     try:
         system = new_system("dual_deploy", **inputs)

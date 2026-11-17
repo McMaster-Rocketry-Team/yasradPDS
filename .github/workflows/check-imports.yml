@@ -1,0 +1,44 @@
+name: Check imports
+
+# Installs the package into a fresh .venv and imports every module under
+# src/yasradPDS, so a missing dependency or broken import fails the check.
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  imports:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      MPLBACKEND: Agg # no display on the runner
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Create .venv and install
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -e .
+
+      - name: Import every module
+        run: |
+          .venv/bin/python - <<'EOF'
+          import importlib, pathlib, sys
+          failed = []
+          for path in sorted(pathlib.Path("src").rglob("*.py")):
+              module = ".".join(path.relative_to("src").with_suffix("").parts).removesuffix(".__init__")
+              try:
+                  importlib.import_module(module)
+                  print(f"ok    {module}")
+              except Exception as e:
+                  failed.append(module)
+                  print(f"FAIL  {module}: {type(e).__name__}: {e}")
+          print(f"\n{len(failed)} of the modules failed to import")
+          sys.exit(1 if failed else 0)
+          EOF

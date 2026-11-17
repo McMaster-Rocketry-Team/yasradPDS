@@ -1,7 +1,7 @@
 # 2 dof pendulum for shroud line stiffness
 import scipy
 import numpy as np
-from yasradPDS.systems.system import system
+# from yasradPDS.systems.system import system  # commented out: "system" does not exist, broke the import
 from yasradPDS.systems.system import UnknownValueError
 from dataclasses import dataclass
 #this is just a general idea for now simulation Parameters are 100% going to change as we scale things

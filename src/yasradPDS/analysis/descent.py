@@ -137,5 +137,5 @@ def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -
     return descent
 
 
-sampleSystem = System()
+# sampleSystem = System()  # commented out: System is abstract, broke the import
 

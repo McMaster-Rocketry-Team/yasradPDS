@@ -1,0 +1,176 @@
+yasradPDS - review and plan
+===========================
+
+Reviewed 2026-11-16 at commit ea89fc0. Updated 2026-11-17.
+
+The foundation works: the inputs GUI, the JSON round trip, the system build,
+the sizing solver and the gore geometry. Nothing past create-system runs end
+to end yet.
+
+How this was checked: every module under src/yasradPDS was imported, and
+create-system was run on the sample config. The GUI was not opened, and the
+exporters and the RocketPy descent were not run (they cannot be imported yet).
+
+
+WHAT IS BROKEN NOW
+------------------
+The sample config fails create-system. The main's opening shock is about
+2,855 N against a limit of 1,000 N (2,000 N max shock divided by FOS 2). It
+still fails with the air density typo fixed, and passes with the shock limits
+raised to 8,000 N.
+
+The solver never sets canopy_mass, gore_outline or shroud.length. Both
+exporters and the stability analysis read them, so they raise
+UnknownValueError. There is also no chute height anywhere, and getDXFpoints
+needs one.
+
+Physics bugs
+    - BASE_TEMP = 228.15 in utils/constants.py:6 should be 288.15. Density
+      comes out about 8% low at 3,000 m (0.8375 instead of 0.9091 kg/m^3).
+    - Deploy altitude is above ground level, but air_density treats it as
+      above sea level, so the 295 m site elevation is ignored.
+
+descent.py bugs
+    - Line 117 calls standard(launch_site=..., date=...), but standard() only
+      takes site.
+    - Line 77 writes velocity twice to the CSV instead of acceleration.
+    - FILE_PATH = "" makes it write to the drive root. pdf_template.py:26 has
+      the same problem.
+    - Apogee is hard-coded to 10,000 m.
+
+
+WHAT IS MISSING
+---------------
+CLI
+    analyze and export are stubs (cli.py:59-72). There is no way to enter the
+    launch site, date or atmosphere model, and defaults.json is never loaded.
+
+Empty files
+    analysis/dispersion.py, export/csv_data.py, export/report.py,
+    export/save_file.py, utils/units.py and all four render/ files.
+    stability.py builds its parameters but has no simulation.
+
+Inputs collected but unused
+    Porosity, line density, and line break strength (never checked against
+    the opening shock). Upper and lower shock are set to the same value.
+
+Tests
+    tests/ covers create-system (sample build and CLI error paths) and the
+    GUI's stage_error. The Tests workflow runs every tests/test_*.py on push.
+    Not covered yet: the solver's numbers (sizing, shock limit, an existing
+    vs non-existing drogue) and Physics.air_density, which needs the
+    BASE_TEMP fix first.
+
+
+PLAN
+----
+Steps 3 and 5 need step 2. Steps 1 and 4 can start now.
+
+1. Get CI passing (CLI/GUI side, small)
+    [x] Add ezdxf, pymupdf and scipy to pyproject.toml.
+    [x] Comment out descent.py:140 and the bad import at stability.py:4.
+        Every module now imports. Owners can delete or fix those lines.
+    [ ] Raise the sample's shock limits so the README example runs. Then
+        drop the shortcut in tests/test_create_system.py that raises them.
+    [x] Fix the README link and the .gitignore globs.
+    [x] Write the smoke test that runs create-system on the sample, plus the
+        Tests workflow (.github/workflows/tests.yml).
+    [ ] Commit both workflows and tests/.
+
+2. Finish the solver (solver side, blocks 3 and 5)
+    [ ] Set shroud.length, canopy_mass and gore_outline. This needs a chute
+        height ratio in defaults.py.
+    [ ] Fix BASE_TEMP and the ground level / sea level mix-up.
+    [ ] Check the opening shock against line break strength.
+
+3. Wire export (CLI/GUI side, after step 2)
+    [ ] Give export the -i and --stage options, sharing one load-system helper
+        with create-system.
+    [ ] Call export_dxf and pdf_export, writing to the -o path instead of
+        FILE_PATH.
+
+4. Wire analyze (CLI/GUI side)
+    [ ] Fix the standard() call and the CSV bug in descent.py.
+    [ ] Move the plotting into render/time_graphs.py, behind --preview.
+    [ ] Load the launch site from defaults.json and add an --atmosphere
+        option, as the TODO at the top of cli.py describes.
+
+5. New analyses, last
+    [ ] Monte Carlo dispersion and its map.
+    [ ] The stability simulation.
+
+Not worth building
+    Delete utils/units.py, export/save_file.py, export/report.py and
+    render/3d_preview.py instead of filling them in. Nothing calls them.
+    3d_preview.py also cannot be imported with a normal import statement,
+    because the name starts with a digit.
+
+
+STRUCTURE IMPROVEMENTS
+----------------------
+The layout in the README (interface, systems, geometries, analysis, render,
+export) is sound. The problems are places where the code does not follow it.
+Listed by payoff.
+
+Worth doing
+
+1. Keep analysis, render and export separate, as the README says.
+   descent_analysis simulates, plots and writes a CSV in one function.
+   export_dxf draws a preview and asks for confirmation with input().
+   Analysis should return data, render should plot it, export should write
+   it, and the CLI should ask the questions (click.confirm). Concretely: move
+   the descent plots to render/time_graphs.py and preview_outline to
+   render/gore_preview.py. Steps 3 and 4 of the plan are much simpler once
+   this is done.
+
+2. Lock the solved fields on Stage. A JSON file can set any field today.
+   Checked: "canopy_mass": 99 and "FOS": 0.5 are accepted without a word.
+   Declaring the solved fields with field(default=None, init=False) makes the
+   dataclass reject them. (Solver side.)
+
+3. Derive is_existing instead of storing it. The GUI computes it from the two
+   diameters and writes it to the JSON, so a hand-edited file can disagree
+   with itself. Checked: a main with main_diameter: 1.0 and
+   is_existing: false is silently resized to 2.85 m. Stage.__post_init__
+   should set it from the diameters, and the GUI should stop writing it.
+   (Solver side for Stage, GUI side for the rest.)
+
+4. Put the physics where the README says it lives. Terminal velocity, area,
+   fill time, X1 and opening shock are static methods on DualDeploySystem,
+   but none of them is specific to dual deploy. They belong in
+   utils/physics.py, where a second system type could use them. The methods
+   in Physics are also missing @staticmethod. (Solver side.)
+
+5. One place for tunable values. defaults.py is meant to hold them, but
+   SPILL_HOLE_RATIO and OPENING_SHOCK_CX are in dual_deploy.py, FOS is on
+   Stage, and the PDF page settings are in constants.py next to gravity.
+   defaults.json holds the launch site and nothing loads it. Move the
+   tunables into defaults.py and have it load the JSON.
+
+6. Drop the unused imports in dual_deploy.py. It imports LaunchSite, which
+   loads RocketPy, and never uses it. That costs about 1.4 s on every
+   create-system (1.6 s to import the systems package, 0.2 s for numpy
+   alone). Geometry and new_geometry are unused there too.
+
+7. One polygon offset. add_hem_allowance (DXF) and offset_points (PDF) do the
+   same job with different handling of duplicate points. Keep one, next to
+   clean_outline, and have both exporters call it.
+
+8. One set of validation rules for the GUI. stage_error in the GUI repeats
+   some of the checks in Stage.__post_init__ and misses others, so a gore
+   count of 2 saves fine and only fails at create-system. Save can build a
+   Stage from the values and show its error message. The geometry box should
+   be a dropdown filled from the geometry registry, which needs a public
+   function that lists the registered names.
+
+Leave alone
+    - The two near-identical registries (geometries/geometry.py and
+      systems/system.py). Twelve lines each is cheaper than a shared
+      abstraction.
+    - The spelling semi_elipsoid. It is the key in saved JSON files, so
+      renaming it breaks them.
+    - system.get(stage, "dotted.name"). It is string-typed, but it is the one
+      seam every analysis and export already uses.
+    - The missing __init__.py files. The folders install correctly as
+      namespace packages. geometries/ and systems/ have one because they need
+      it to register their classes.
