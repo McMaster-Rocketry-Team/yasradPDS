@@ -2,7 +2,7 @@
 import scipy
 import numpy as np
 # from yasradPDS.systems.system import system  # commented out: "system" does not exist, broke the import
-from yasradPDS.systems.system import UnknownValueError
+from yasradPDS.systems.system import UnknownValueError, System
 from dataclasses import dataclass
 #this is just a general idea for now simulation Parameters are 100% going to change as we scale things
 
@@ -29,30 +29,21 @@ class SimulationParams:
     aerodynamic_stiffness: float | None = None
     rotational_damping: float | None = None
 
+# Helper method to get rid of None type: will likely move this to System later
+def get_float(system: System, stage: int, name: str) -> float:
+    value = system.get(stage, name) # raises UnknownValueError if None
+    if not isinstance(value, (int, float)):
+        raise TypeError(f"stage {stage} {name} should be a number, got {type(value).__name__}")
+    return float(value)
+
 
 def build_simulation_params(parachute, stage: int = 1, *, canopy_mass: float | None = None, line_length: float | None = None) -> SimulationParams:
-
-    ##both these values are unknowns so incase these are not calculated
     if canopy_mass is None:
-        try:
-            canopy_mass = parachute.get(stage, "canopy_mass")
-        except UnknownValueError:
-            raise UnknownValueError(
-                f"canopy mass is unknown for stage {stage}; provide canopy_mass"
-            ) from None
-
+        canopy_mass = get_float(parachute, stage, "canopy_mass") # turn into float
     if line_length is None:
-        try:
-            line_length = parachute.get(stage, "shroud.length")
-        except UnknownValueError:
-            raise UnknownValueError(
-                f"shroud length is unknown for stage {stage}; provide line_length"
-            ) from None
-
-    if canopy_mass <= 0:
-        raise ValueError("canopy_mass must be greater than zero")
-    if line_length <= 0:
-        raise ValueError("line_length must be greater than zero")
+        line_length = get_float(parachute, stage, "shroud.length")
+    if canopy_mass <= 0 or line_length <= 0: # "x" is not None is not needed anymore
+        raise ValueError("canopy_mass and line_length must be greather than zero.")
 
     spring_constant = (
         parachute.get(stage, "shroud.count")
