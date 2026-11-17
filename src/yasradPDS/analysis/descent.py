@@ -19,7 +19,7 @@ ROCKET_OFF_CD = 0
 COM_NO_MOTOR = 0 #Distance from rocket coordinate system orgin
 
 #For a pure descent test, these are ignored, but still needed to create descent objects
-RAIL_LENGTH : float = 0
+RAIL_LENGTH : float = 1 # RocketPy doesn't accept <= 0 for rail_length
 RAIL_INCLINATION : float = 0
 
 
@@ -74,7 +74,8 @@ def descent_analysis(sys : System, site : LaunchSite, date : datetime, file_name
 
     
     if file_name is not None:
-        vertStack = np.vstack((altitudeHeader, timeAltitdue, velocityHeader, timeVelocity, accelHeader, timeVelocity))
+        # vertStack = np.vstack((altitudeHeader, timeAltitdue, velocityHeader, timeVelocity, accelHeader, timeVelocity))  # wrote velocity twice
+        vertStack = np.vstack((altitudeHeader, timeAltitdue, velocityHeader, timeVelocity, accelHeader, timeAccel))
         file = open(file=str(FILE_PATH + "/" + file_name +".csv"), mode="w")
         for i in vertStack:
             file.write(",".join(map(str, i)) + "\n")
@@ -114,7 +115,8 @@ def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -
         fill_time = sys.get(i, "fill_time")
         rocket.add_parachute(name=chute_name, cd_s = cd_s, trigger=trigger_altitude, radius=radius, lag= fill_time)
 
-    env : Environment = standard(launch_site=site, date=date)
+    # env : Environment = standard(launch_site=site, date=date)  # standard() only takes the site, use forecast for launch site and date
+    env : Environment = standard(site)
 
     #initial_solution for Flight simulation, we simulate the rocket as if it is not in motion at apogee. Everything 
     initial_state : list = [
@@ -137,4 +139,8 @@ def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -
     return descent
 
 
+<<<<<<< HEAD
+=======
+# sampleSystem = System()
+>>>>>>> ed1b32c5f15ac9c637c2201c0748c401c67cfde8
 

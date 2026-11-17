@@ -78,7 +78,7 @@ fields. `create-system` reads `system.json` in the current folder
 unless `-i` points it to another file.
 
 Every command runs on its own, so the JSON file is what carries the
-inputs from one command to the next. See [`USAGE.txt`](USAGE.txt) for
+inputs from one command to the next. See [`cli-gui-usage.txt`](cli-gui-usage.txt) for
 every field, its units and the validation rules.
 
 ## Project layout

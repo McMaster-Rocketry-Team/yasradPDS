@@ -1,0 +1,33 @@
+name: Tests
+
+# Installs the package into a fresh .venv and runs every tests/test_*.py script.
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      MPLBACKEND: Agg # no display on the runner
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Create .venv and install
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -e .
+
+      - name: Run tests
+        run: |
+          for t in tests/test_*.py; do
+            echo "== $t"
+            .venv/bin/python "$t"
+          done

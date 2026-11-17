@@ -1,6 +1,6 @@
 """Build and preview a laser-cut DXF
 
-Points and allowances are in metres; DXF coordinates are in millimetres
+Points and allowances are in metres;
 """
 
 import ezdxf
