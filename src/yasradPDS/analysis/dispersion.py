@@ -18,6 +18,7 @@ from rocketpy.stochastic import (
 """
 
 https://nomads.ncep.noaa.gov/info.php?page=opendap_grib_migration - Since NOMAD is depreciating OpenDAP acsess, wed need to use the Grib Filter
+https://nomads.ncep.noaa.gov/pub/data/nccf/com/aigefs/prod/ - AIGEFs datasets   
 """
 #https://docs.rocketpy.org/en/latest/notebooks/monte_carlo_analysis/monte_carlo_analysis.html 
 #
