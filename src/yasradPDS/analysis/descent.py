@@ -6,7 +6,6 @@ from rocketpy import Environment, PointMassRocket, Flight, Rocket
 from yasradPDS.systems.system import System
 from yasradPDS.utils.atmosphere import LaunchSite, forecast, standard
 from yasradPDS.geometries.geometry import Geometry
-from yasradPDS.config.defaults import FILE_PATH
 from matplotlib import pyplot as plt
 
 
@@ -29,13 +28,13 @@ APOGEE = 10000
 
 
 
-def descent_analysis(sys : System, site : LaunchSite, date : datetime, file_name : str | None = None):
+def descent_analysis(sys : System, site : LaunchSite, date : datetime):
     """
     Returns a rocketpy flight object for the system dropped from apogee containing all descent kinematics data.
     
     Note: RocketPy does consider the coriolis effect so a slight horizontal drift is expected
-    
-    If a file name is provided, a CSV file containing all data will be saved to FILE_PATH configured in defaults.py
+
+    CSV export lives in export/csv_data.py (run via `export csv` in the CLI).
     """
 
     
@@ -44,27 +43,24 @@ def descent_analysis(sys : System, site : LaunchSite, date : datetime, file_name
 
 
     #Grabbing descent data for both matplotlib and csv export 
-    timeAltitdue = np.array(descent.z)
+    timeAltitude = np.array(descent.z)
     timeVelocity = np.array(descent.vz)
     timeAccel = np.array(descent.az)
 
     #Plotting the alt, v, and a vertically stacked
     fig, z = plt.subplots(3, 1)
     
-    altitudeHeader = ["Time (s)", "Altitude ASL (m)"]
     z[0].set_title("Altitude after apogee until impact")
     z[0].set_ylabel("Altitude ASL (m)")
     z[0].set_xlabel("Time After Apogee (s)")
-    z[0].plot(timeAltitdue[:, 0], timeAltitdue[:, 1])
+    z[0].plot(timeAltitude[:, 0], timeAltitude[:, 1])
 
-    velocityHeader = ["Time (s)", "Vertical Velocity"]
     z[1].set_title("Vertical velocity after apogee until impact")
     z[1].set_ylabel("Z - Velocity (m/s)")
     z[1].set_xlabel("Time After Apogee (s)")
     z[1].plot(timeVelocity[:, 0], timeVelocity[:, 1])
     z[1].yaxis.set_inverted(True)
 
-    accelHeader = ["Time (s)", "Vertical Accel"]
     z[2].set_title("Vertical acceleration after apogee until impact")
     z[2].set_ylabel("Z - Acceleration (m/s^2)")
     z[2].set_xlabel("Time After Apogee (s)")
@@ -72,14 +68,6 @@ def descent_analysis(sys : System, site : LaunchSite, date : datetime, file_name
     plt.subplots_adjust(hspace=0.6, wspace=0.6)
     plt.show()
 
-    
-    if file_name is not None:
-        # vertStack = np.vstack((altitudeHeader, timeAltitdue, velocityHeader, timeVelocity, accelHeader, timeVelocity))  # wrote velocity twice
-        vertStack = np.vstack((altitudeHeader, timeAltitdue, velocityHeader, timeVelocity, accelHeader, timeAccel))
-        file = open(file=str(FILE_PATH + "/" + file_name +".csv"), mode="w")
-        for i in vertStack:
-            file.write(",".join(map(str, i)) + "\n")
-        file.close()
 
 
 def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -> Flight:
