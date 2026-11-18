@@ -37,7 +37,7 @@ def descent_analysis(sys : System, site : LaunchSite, date : datetime, file_name
     
     If a file name is provided, a CSV file containing all data will be saved to FILE_PATH configured in defaults.py
     """
-    
+
     
     descent = get_descent_flight_3_DOF(sys=sys, site=site, date=date)
     descent.plots.trajectory_3d()
@@ -90,8 +90,9 @@ def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -
     """
     #Get Mass of rocket
     mass = 0
-    for i in range(1):
+    apogee = sys.get(0, "deploy_altitude")
 
+    for i in range(1):
         mass += sys.get(i, "total_mass")
 
     print(f"mass of rocket is {mass} kg")
@@ -121,7 +122,7 @@ def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -
     #initial_solution for Flight simulation, we simulate the rocket as if it is not in motion at apogee. Everything 
     initial_state : list = [
     0, #Initial Time
-    0, 0, APOGEE, #x, y, z
+    0, 0, apogee, #x, y, z
     0, 0, 0, #Velocity Components
     1, 0, 0, 0, #Quaternion Rotations - Irrelevant for 3dof
     0, 0, 0 #Angular velocities - Irrelevant for 3dof
@@ -139,8 +140,5 @@ def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -
     return descent
 
 
-<<<<<<< HEAD
-=======
 # sampleSystem = System()
->>>>>>> ed1b32c5f15ac9c637c2201c0748c401c67cfde8
 
