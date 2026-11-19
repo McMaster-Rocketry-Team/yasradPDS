@@ -11,6 +11,9 @@ import math
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
+import yasradPDS.geometries # importing registers every geometry module
+from yasradPDS.geometries.geometry import _REGISTRY
+
 FONT = 'Calibri'
 FONT_SIZE = 10
 TITLE = "yasradPDS Dual Deploy GUI"
@@ -35,11 +38,10 @@ CANOPY_FIELDS = [
     ("geometry",       "GEOMETRY",                tk.StringVar),
     ("gore_count",     "GORE COUNT",              WholeNumberVar),
     ("fabric_density", "FABRIC DENSITY (kg/m^2)", tk.DoubleVar),
-    ("porosity",       "POROSITY (0 to 1)",       tk.DoubleVar),
 ]
 
 DEPLOYMENT_FIELDS = [
-    ("deploy_altitude", "DEPLOY ALTITUDE (AGL, m)",   tk.DoubleVar),
+    ("deploy_altitude", "DEPLOY ALTITUDE (AGL, ft)",  tk.DoubleVar),
     ("deploy_velocity", "DEPLOY VELOCITY (m/s)", tk.DoubleVar),
     ("target_velocity", "TARGET VELOCITY (m/s)", tk.DoubleVar),
 ]
@@ -52,7 +54,7 @@ LOADS_FIELDS = [
 ]
 
 LINE_FIELDS = [
-    ("length",         "LENGTH (m)",         tk.DoubleVar),
+    ("length",         "LENGTH (ft)",        tk.DoubleVar),
     ("density",        "DENSITY (kg/m)",     tk.DoubleVar),
     ("break_strength", "BREAK STRENGTH (N)", tk.DoubleVar),
     ("max_epsilon",    "MAX EPSILON (0-1)",        tk.DoubleVar),
@@ -60,9 +62,15 @@ LINE_FIELDS = [
 
 # optional: left blank, the system solves them
 EXISTING_FIELDS = [
-    ("main_diameter",       "MAIN DIAMETER (m)",       tk.DoubleVar),
-    ("spill_hole_diameter", "SPILL HOLE DIAMETER (m)", tk.DoubleVar),
+    ("main_diameter",       "MAIN DIAMETER (ft)",      tk.DoubleVar),
+    ("spill_hole_diameter", "SPILL HOLE DIAMETER (ft)", tk.DoubleVar),
 ]
+
+# entered and saved in ft; converted to m when the system is created (cli._load_system)
+FT_FIELDS = {"deploy_altitude", "length", "main_diameter", "spill_hole_diameter"}
+
+# dropdown fields: key -> choices; the first choice is the default
+CHOICES = {"geometry": sorted(_REGISTRY)}
 
 class InputFrame(tk.LabelFrame):
     """A labelled box of label + entry pairs that owns its variables.
@@ -90,7 +98,12 @@ class InputFrame(tk.LabelFrame):
                 self.vars[key].set("") # DoubleVar starts at 0.0, optional boxes should start empty
             tk.Label(self, text=label, font=(FONT, FONT_SIZE, "bold")).grid(
                 row=row, column=0, sticky="w", padx=5, pady=2)
-            self.entries[key] = tk.Entry(self, textvariable=self.vars[key], font=(FONT, FONT_SIZE, "normal"))
+            if key in CHOICES:
+                self.vars[key].set(CHOICES[key][0])
+                self.entries[key] = ttk.Combobox(self, textvariable=self.vars[key], values=CHOICES[key],
+                                                 state="readonly", font=(FONT, FONT_SIZE, "normal"))
+            else:
+                self.entries[key] = tk.Entry(self, textvariable=self.vars[key], font=(FONT, FONT_SIZE, "normal"))
             self.entries[key].grid(row=row, column=1, padx=5, pady=2)
 
     def get(self) -> dict:

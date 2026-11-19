@@ -46,7 +46,6 @@ class Stage:
     is_existing: bool = False
     geometry: str
     gore_count: int
-    porosity: float # this gave an error, for the __post_init__ for whoever removed it, readded for CLI testing
     deploy_altitude: float # m
     deploy_velocity: float # m/s
     target_velocity: float # m/s
@@ -84,9 +83,6 @@ class Stage:
 
         if self.gore_count < 3:
             raise ValueError(f"{self.name}: gore_count must be >= 3")
-            
-        if not self.porosity <= 1:
-            raise ValueError(f"{self.name}: porosity must be in [0, 1]")
 
         for name in ("cord_upper", "cord_lower", "shroud"):
             v = getattr(self, name)
