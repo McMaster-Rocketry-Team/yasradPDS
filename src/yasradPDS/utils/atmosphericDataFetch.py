@@ -7,91 +7,122 @@
 """
 https://nomads.ncep.noaa.gov/info.php?page=opendap_grib_migration - Since NOMAD is depreciating OpenDAP acsess, wed need to use the Grib Filter
 and then convert to NetCDF for rocketpy 
-https://nomads.ncep.noaa.gov/gribfilter.php?ds=gefs_atmos_0p50a - GFS Ensemble Forecasts 
-https://nomads.ncep.noaa.gov/cgi-bin/filter_gefs_atmos_0p50a.pl?dir=%2Fgefs.20261118%2F18%2Fatmos%2Fpgrb2ap5&file=geavg.t18z.pgrb2a.0p50.f000&all_var=on&all_lev=on 
-Alternatively we could use siphon 
-https://www.unidata.ucar.edu/software/tds
-https://unidata.github.io/siphon/latest/ 
-
-Or we could add uncertainties to forecast data 
 """
 #https://docs.rocketpy.org/en/latest/notebooks/monte_carlo_analysis/monte_carlo_analysis.html 
-
-
+#https://docs.rocketpy.org/en/latest/user/environment/3-further/other_apis.html 
+#https://docs.rocketpy.org/en/latest/_modules/rocketpy/environment/environment.html 
 from urllib import request
 from netCDF4 import Dataset
 from datetime import datetime, timezone, timedelta
-
-
-
-import cfgrib
-import requests
-
-
-
-
-
-def fetch_ensemble_data(date : datetime, lattitude : float, longitude : float) -> Dataset:
-    """Based on date, time, lattitude and longitude, return a netCDF4 ensemble in an appropriate formant for rocketpy usage"""
-    ds = xr.open_dataset('era5-levels-members.grib', engine='cfgrib')
-
-    
-    
-    
-    
-    
-    return ds
+from rocketpy import Environment
 import xarray as xr
+import cfgrib
+from time import sleep
+import netCDF4
+import numpy as np
+
+def _get_grib_GEFS_Ensemble_URLs(date: datetime, num_ensembles : int):
+    """Returns URLs leading to each ensemble member's NOAA GEFS 0.5° Ensemble data. If the requested forecast does n
+    Date should be UTC time
+    """
+
+    #Go back 5 hrs to prevent acsessing unpublished NOMAD data
+    init_time = datetime.now().astimezone(timezone.utc) - timedelta(hours=5)
+    # Set date to UTC time
+    date = date.astimezone(timezone.utc)
+    if(date - init_time > timedelta(hours = 360)):
+        raise ValueError("date must be within the next 14 days of current UTC time, otherwise ensemble data does not exist")
 
 
-def _download_grib_GEFS_Ensemble(date: datetime) -> list[str]:
-    """Returns URLs leading to NOAA GEFS 0.5° Ensemble data."""
+    
 
-    # Concatenate in form base + ensemble_member
-    time = datetime.now(timezone.utc) - timedelta(hours=5)
 
-    # Ensure date is UTC-aware
-    if date.tzinfo is None:
-        date = date.replace(tzinfo=timezone.utc)
+    
 
     # Determines which cycle of the day we use
-    cycle_hour = (time.hour // 6) * 6
-    cycle_time = time.replace(
+    cycle_hour = (init_time.hour // 6) * 6
+    init_cycle_time = init_time.replace(
         hour=cycle_hour, minute=0, second=0, microsecond=0
     )
-
-    # If the cycle has not yet been initialized, use previous cycle
-    # (normally unnecessary, but retained for safety)
-    if cycle_time > time:
-        cycle_time -= timedelta(hours=6)
     
+
+    
+
+    #Cycle hours (from 0:00 utc every 6 hours), also things just for the url link
     cycle = f"t{cycle_hour:02d}z"
     cycle2 = f"{cycle_hour:02d}"
-    # Constant parts of the download URL
+
+    # Url parts taht dont really change
     part1 = "https://nomads.ncep.noaa.gov/cgi-bin/filter_gefs_atmos_0p50a.pl?dir=%2Fgefs."
     part2 = f"%2F{cycle2}%2Fatmos%2Fpgrb2ap5&file="
     part3 = ".pgrb2a.0p50."
     part4 = "&var_HGT=on&var_TMP=on&var_UGRD=on&var_VGRD=on&all_lev=on"
 
     # The day
-    date_part = cycle_time.strftime("%Y%m%d")
+    date_part = init_cycle_time.strftime("%Y%m%d")
 
-    # Forecast
-    delta = date - cycle_time
-    hourDelta = int(round(delta.total_seconds() / 3600 / 3) * 3)
-    hourDelta = max(0, hourDelta)
+    delta = date - init_cycle_time
+    forecast_hours = delta.total_seconds() / 3600
+    start_hour = int(round(forecast_hours / 3) * 3)
 
-    forecast = f"f{hourDelta:03d}"
+    # Generate more forecasts
+    hours = range(start_hour, start_hour + 9, 3)
 
-    # Download all ensemble members
     urls = []
 
-    for i in range(1, 31):
-        ensemble_member = f"gep{i:02d}"
-        url = part1 + date_part + part2 + ensemble_member + "." + cycle + part3 + forecast + part4
-        print(url)
+    for i in range(num_ensembles):
 
-#ds = cfgrib.open_datasets(webf[0], backend_kwargs={"indexpath": ""})
+        ensemble_member = "gec00" if i == 0 else f"gep{i:02d}"
 
-day = datetime(2026, 11, 18, 12, tzinfo=timezone.utc)
-_download_grib_GEFS_Ensemble(day)
+        for hour in hours:
+
+            forecast = f"f{hour:03d}"
+
+            url = (
+                part1 + date_part + part2
+                + ensemble_member + "." + cycle
+                + part3 + forecast + part4
+            )
+
+            urls.append(url)
+
+    return urls
+
+
+def add_ensembles_to_env(env : Environment):
+    """Appends ensemble data to the specified enviroment"""
+    urls = _get_grib_GEFS_Ensemble_URLs(env.date, 3)
+
+    files = []
+    #This will take a while
+    for i in range(len(urls)):
+        path, http = request.urlretrieve(urls[i])
+        sleep(2)
+        files.append(path)
+        print(path)
+
+    ensembles = []
+    #This bit needs to be completed
+    for i in files:
+        ds : xr.Dataset = cfgrib.open_datasets(i, backend_kwargs={"indexpath": ""})
+        ensembles.append(ds)
+
+    ncdf = _xrDataset_to_rocketPyNetCDF4(ensemble_datasets=ensembles, lat=env.latitude, lon =env.longitude)
+    env.set_atmospheric_model(type="ensemble", file = ncdf, dictionary=MAPPING_DICT)
+
+MAPPING_DICT = {
+    "time": "",
+    "latitude": "",
+    "longitude": "",
+    "level": "lev",
+    "temperature": "",
+    "surface_geopotential_height": "",  # optional
+    "geopotential_height": "",          # or geopotential
+    "geopotential": None,
+    "u_wind": "",
+    "v_wind": "",
+    "ensemble" : ""
+}
+
+def _xrDataset_to_rocketPyNetCDF4(ensemble_datasets : xr.Dataset, lat : float, lon : float) -> netCDF4.Dataset:
+    pass
