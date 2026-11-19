@@ -1,6 +1,7 @@
 # 2 dof pendulum for shroud line stiffness
 import scipy
 import numpy as np
+import math
 # from yasradPDS.systems.system import system  # commented out: "system" does not exist, broke the import
 from yasradPDS.systems.system import UnknownValueError, System
 from dataclasses import dataclass
@@ -61,3 +62,63 @@ def build_simulation_params(parachute, stage: int = 1, *, canopy_mass: float | N
     )
     
 
+def Line_Lengths_Attachments(canopy_center : tuple , 
+canopy_tilt : float , attachment_spacing: float , rocket_position : tuple) -> tuple:
+    left_attachment = (canopy_center[0] - attachment_spacing * 0.5 * math.cos(canopy_tilt),
+    canopy_center[1] - attachment_spacing * 0.5 * math.sin(canopy_tilt))
+
+    right_attachment = (canopy_center[0] + attachment_spacing * 0.5 * math.cos(canopy_tilt),
+    canopy_center[1] + attachment_spacing * 0.5 * math.sin(canopy_tilt))
+
+    # Left then right line
+    line_lengths = (math.dist(rocket_position, left_attachment),
+    math.dist(rocket_position, right_attachment))
+
+    return left_attachment , right_attachment , line_lengths
+
+def line_stretch(current_length: float, unstretched_length: float) -> float:
+    return current_length - unstretched_length
+
+def line_tension(stretch: float, stiffness: float) -> float:
+    return stiffness * max(0.0, stretch)
+
+def line_force(rocket_position: tuple,attachment_point: tuple,tension: float) -> tuple:
+    # Vector pointing from the rocket toward the attachment point
+    dx = attachment_point[0] - rocket_position[0]
+    dz = attachment_point[1] - rocket_position[1]
+
+    length = math.hypot(dx, dz)
+
+    if length == 0:
+        raise ValueError("Cannot calculate line direction: length is zero")
+
+    # Unit direction vector multiplied by tension
+    force_x = tension * dx / length
+    force_z = tension * dz / length
+
+    return force_x, force_z
+
+def rocket_acceleration(mass: float , left_force: tuple , right_force: tuple, gravity: float = 9.81)->tuple:
+    if(mass<=0):
+        raise TypeError("Mass cannot be less than or equal zero")
+
+    net_force_x = left_force[0] + right_force[0]
+    net_force_z = left_force[1] + right_force[1] - mass * gravity
+    acceleration_x = net_force_x / mass
+    acceleration_z = net_force_z / mass
+
+    return acceleration_x, acceleration_z
+
+
+def simulation(
+    system: System,
+    stage: int,
+    rocket_position: tuple,
+    rocket_velocity: tuple,
+    duration: float,
+    dt: float):
+
+    rocket_mass = system.get(stage, "total_mass")
+    canopy_diameter = system.get(stage, "main_diameter")
+    line_length = system.get(stage, "shroud.length")
+    total_shroud_stiffness = system.get(stage, "shroud.k")
