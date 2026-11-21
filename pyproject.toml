@@ -16,6 +16,10 @@ dependencies = [
     "click>=8",
     "ezdxf",
     "pymupdf",
+    "cfgrib",
+    "netCDF4",
+    "urllib",
+    "xarray"
 ]
 
 [project.scripts]
