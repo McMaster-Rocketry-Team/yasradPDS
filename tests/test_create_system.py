@@ -1,4 +1,4 @@
-"""Runs `yasradPDS create-system` on the sample config and checks the system builds.
+"""Runs `yasradPDS solve` on system.json and checks the system builds.
 
 Run with: .venv/Scripts/python tests/test_create_system.py (replace slash with backslash)
 """
@@ -10,7 +10,7 @@ from click.testing import CliRunner
 
 from yasradPDS.interface.cli import cli
 
-SAMPLE = Path(__file__).parents[1] / "src/yasradPDS/config/sample_dual_deploy.json"
+SAMPLE = Path(__file__).parents[1] / "system.json"
 
 
 def run_create_system(inputs: dict | str):
@@ -18,7 +18,7 @@ def run_create_system(inputs: dict | str):
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "system.json"
         path.write_text(inputs if isinstance(inputs, str) else json.dumps(inputs))
-        return CliRunner().invoke(cli, ["create-system", "-i", str(path), "--show"])
+        return CliRunner().invoke(cli, ["solve", "-i", str(path), "--show"])
 
 
 def sample() -> dict:
@@ -32,16 +32,11 @@ def assert_clean_error(result, message: str):
     assert f"Error: {message}" in result.output, result.output
 
 
-def test_sample_builds_with_raised_shock_limits():
-    inputs = json.loads(SAMPLE.read_text())
-    # shortcut: the sample's 2000 N limits fail the main's opening shock (see PLAN.txt); drop this once the sample is fixed
-    for stage in ("drogue", "main"):
-        inputs[stage]["max_shock_upper"] = inputs[stage]["max_shock_lower"] = 8000.0
-
-    result = run_create_system(inputs)
+def test_sample_builds():
+    result = run_create_system(sample())
     print(result.output)
     assert result.exit_code == 0, result.output
-    assert "Created system 'Sample Dual Deploy' with 2 stages" in result.output
+    assert "Created system 'Test Dual Deploy' with 2 stages" in result.output
     assert "[drogue]" in result.output and "[main]" in result.output
 
 
@@ -53,7 +48,7 @@ def test_bad_inputs_give_clean_error():
 
 def test_missing_default_file():
     with tempfile.TemporaryDirectory() as tmp:
-        result = CliRunner().invoke(cli, ["create-system", "-i", str(Path(tmp) / "system.json")])
+        result = CliRunner().invoke(cli, ["solve", "-i", str(Path(tmp) / "system.json")])
     assert result.exit_code == 2, result.output  # click's usage error
     assert "does not exist" in result.output
 

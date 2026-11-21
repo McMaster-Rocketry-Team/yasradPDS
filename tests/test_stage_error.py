@@ -7,7 +7,7 @@ from pathlib import Path
 
 from yasradPDS.interface.dual_deploy_gui import stage_error
 
-SAMPLE = Path(__file__).parents[1] / "src/yasradPDS/config/sample_dual_deploy.json"
+SAMPLE = Path(__file__).parents[1] / "system.json"
 
 
 def stage(name: str) -> dict:

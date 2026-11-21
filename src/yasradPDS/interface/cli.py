@@ -1,12 +1,6 @@
 # handles commands, routes inputs
 """
-Instead of argparse, using click library
-https://click.palletsprojects.com/en/stable/#documentation
-
-Why click?
-It's a lot easier to read compared to argparse and can easily add more cli commands.
-
-climage for yasradPDS image
+TODO: climage for yasradPDS image
 """
 
 import click 
