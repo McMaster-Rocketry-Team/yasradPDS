@@ -19,7 +19,8 @@ dependencies = [
     "pymupdf",
     "xarray",
     "cfgrib",
-    "eccodes"
+    "eccodes",
+    "siphon"
 ]
 
 [project.scripts]
