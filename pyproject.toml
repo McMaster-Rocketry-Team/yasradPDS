@@ -14,7 +14,6 @@ dependencies = [
     "rocketpy",
     "pytz",
     "click>=8",
-    "tempfile",
     "pytest",
     "ezdxf",
     "pymupdf",
