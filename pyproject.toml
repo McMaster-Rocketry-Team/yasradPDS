@@ -14,12 +14,13 @@ dependencies = [
     "rocketpy",
     "pytz",
     "click>=8",
+    "pytest",
     "ezdxf",
     "pymupdf",
+    "xarray",
     "cfgrib",
-    "netCDF4",
-    "urllib",
-    "xarray"
+    "eccodes",
+    "siphon"
 ]
 
 [project.scripts]

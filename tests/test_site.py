@@ -11,7 +11,9 @@ from click.testing import CliRunner
 from yasradPDS.interface.cli import cli
 from yasradPDS.utils.atmosphere import LaunchSite
 
-ARGS = ["--name", "Launch Canada", "--latitude", "47.98", "--longitude", "-81.85", "--elevation", "390"]
+SITE = json.loads((Path(__file__).parents[1] / "site.json").read_text())
+ARGS = ["--name", SITE["name"], "--latitude", str(SITE["latitude"]), "--longitude", str(SITE["longitude"]),
+        "--elevation", str(SITE["elevation"]), "--timezone", SITE["timezone"]]
 
 
 def run_site(args):
@@ -24,7 +26,7 @@ def run_site(args):
 def test_site_round_trips():
     result, saved = run_site(ARGS)
     assert result.exit_code == 0, result.output
-    assert LaunchSite.from_dict(saved) == LaunchSite("Launch Canada", 47.98, -81.85, 390.0)
+    assert LaunchSite.from_dict(saved) == LaunchSite.from_dict(SITE)
 
 
 def test_bad_site_not_saved():
