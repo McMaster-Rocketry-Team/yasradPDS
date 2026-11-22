@@ -118,6 +118,8 @@ def analysis(run_type, path, site_path):
 @click.option("-o", "path", required = True, type = click.Path(dir_okay = False), help = "Output file path")
 @click.option("-i", "system_path", default = DEFAULT_CONFIG, show_default = True, type = click.Path(exists = True, dir_okay = False), help = "Inputs saved by config")
 @click.option("-s", "site_path", default = DEFAULT_SITE, show_default = True, type = click.Path(exists = True, dir_okay = False), help = "Launch site saved by site")
+
+#TODO: must be able to select stage in cli for pdf/dxf export
 def export(format, path, system_path, site_path):
     """Export results to a file. csv: descent altitude, velocity and acceleration vs time."""
 
@@ -134,6 +136,9 @@ def export(format, path, system_path, site_path):
         from yasradPDS.export.dxf_template import export_dxf
         from yasradPDS.config.defaults import SEAM_ALLOWANCE as SA
         export_dxf(system.get(0, "gore_outline"), path, allowance_m = SA, preview = True)
+    elif format == "pdf":
+        from yasradPDS.export.pdf_template import pdf_export
+        pdf_export(system, 0, path)
     else:
-        click.echo(f"Export {format} to {path}")
+        click.echo(f"Unsupported file type.")
         # TODO: call export module
