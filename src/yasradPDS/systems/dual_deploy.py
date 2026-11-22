@@ -28,6 +28,7 @@ class DualDeploySystem(System):
 
     def _solve(self) -> None:
         """Solves for unknowns upon initialization"""
+        self._main.CD = 2.2 # TEMPORARY
         
         # an existing drogue sets how fast the main opens, so it goes first.
         # otherwise the main's shock limit sets the drogue size, so main goes first.
@@ -58,6 +59,9 @@ class DualDeploySystem(System):
             main.deploy_velocity = self.get_terminal_velocity(main.total_mass, self._drogue.area, self._drogue.CD, rho)
         else:
             main.deploy_velocity = self._max_deploy_velocity(main)
+
+        # TEMPORARY
+        main.target_velocity = self.get_terminal_velocity(main.total_mass, main.area, 2.2, Physics.air_density(300))
 
     def _solve_drogue(self) -> None:
         # drogue should be slowed to the main's deploy velocity by the time it gets there
