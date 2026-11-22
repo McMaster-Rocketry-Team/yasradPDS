@@ -9,7 +9,7 @@ POINTS_PER_METER = 1181
 # 800-2000 is the goal (roughly 20-50 per inch); 1181 is about 30 per inch.
 
 
-
+SEAM_ALLOWANCE = 0.02 # m
 
 SEMI_ELIPSOID_CD = 1.6
 #industry standard for semi-ellipsoid drag coefficient, used for drogue and main parachutes.

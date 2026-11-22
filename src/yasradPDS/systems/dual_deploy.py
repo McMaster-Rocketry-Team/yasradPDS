@@ -66,6 +66,10 @@ class DualDeploySystem(System):
     def _solve_drogue(self) -> None:
         # drogue should be slowed to the main's deploy velocity by the time it gets there
         self._set_area(self._drogue, self._main.deploy_velocity, self._main.deploy_altitude)
+        self._drogue.gore_outline = self._drogue._geometry.getDXFpoints(self._drogue.gore_count,
+                                                                        self._drogue.main_diameter,
+                                                                        0.707*self._drogue.main_diameter,
+                                                                        self._drogue.spill_hole_diameter)
 
     def _set_area(self, stage: Stage, velocity: float, altitude: float) -> None:
         """Area from the diameters if the canopy exists, else sized to descend at `velocity` at `altitude`"""

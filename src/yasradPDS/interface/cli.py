@@ -120,14 +120,20 @@ def analysis(run_type, path, site_path):
 @click.option("-s", "site_path", default = DEFAULT_SITE, show_default = True, type = click.Path(exists = True, dir_okay = False), help = "Launch site saved by site")
 def export(format, path, system_path, site_path):
     """Export results to a file. csv: descent altitude, velocity and acceleration vs time."""
+
+    _, system = _load_system(system_path)
+
     if format == "csv": # shortcut: csv is descent data only; add an analysis-type argument when montecarlo exports exist
         from datetime import datetime
         from yasradPDS.analysis.descent import get_descent_flight_3_DOF
         from yasradPDS.export.csv_data import descent_csv
-        _, system = _load_system(system_path)
         # re-runs the descent without plotting; nothing is cached from `analysis`
         descent_csv(get_descent_flight_3_DOF(system, _load_site(site_path), datetime.now()), path)
         click.echo(f"Saved descent data to {path}")
+    elif format == "dxf":
+        from yasradPDS.export.dxf_template import export_dxf
+        from yasradPDS.config.defaults import SEAM_ALLOWANCE as SA
+        export_dxf(system.get(0, "gore_outline"), path, allowance_m = SA, preview = True)
     else:
         click.echo(f"Export {format} to {path}")
         # TODO: call export module

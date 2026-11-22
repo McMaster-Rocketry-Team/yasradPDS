@@ -93,7 +93,7 @@ def add_hem_allowance(points: np.ndarray, allowance_m: float) -> np.ndarray:
 
 def preview_outline(original_points: np.ndarray , cut_points : np.ndarray) -> None:
     """Show the original outline and its cut outlines at their real proportions."""
-    origional_closed = np.vstack((original_points, original_points[0]))
+    original_closed = np.vstack((original_points, original_points[0]))
     cut_closed = np.vstack((cut_points , cut_points[0]))
 
     fig, ax = plt.subplots()
@@ -106,11 +106,11 @@ def preview_outline(original_points: np.ndarray , cut_points : np.ndarray) -> No
         label = "Cut outline",
     )
     ax.plot(
-        origional_closed[:,0],
-        origional_closed[:,1],
+        original_closed[:,0],
+        original_closed[:,1],
         color="black",
         linestyle=":",
-        label = "Origional outline"
+        label = "Original outline"
     )
 
     ax.set_aspect("equal", adjustable="box")
