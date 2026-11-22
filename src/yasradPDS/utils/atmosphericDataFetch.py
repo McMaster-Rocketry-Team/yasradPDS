@@ -107,22 +107,7 @@ def add_ensembles_to_env(env : Environment):
         ds : xr.Dataset = cfgrib.open_datasets(i, backend_kwargs={"indexpath": ""})
         ensembles.append(ds)
 
-    ncdf = _xrDataset_to_rocketPyNetCDF4(ensemble_datasets=ensembles, lat=env.latitude, lon =env.longitude)
-    env.set_atmospheric_model(type="ensemble", file = ncdf, dictionary=MAPPING_DICT)
-
-MAPPING_DICT = {
-    "time": "",
-    "latitude": "",
-    "longitude": "",
-    "level": "lev",
-    "temperature": "",
-    "surface_geopotential_height": "",  # optional
-    "geopotential_height": "",          # or geopotential
-    "geopotential": None,
-    "u_wind": "",
-    "v_wind": "",
-    "ensemble" : ""
-}
+    Environment
 
 def _xrDataset_to_rocketPyNetCDF4(ensemble_datasets : xr.Dataset, lat : float, lon : float) -> netCDF4.Dataset:
     pass

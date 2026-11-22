@@ -2,7 +2,6 @@
 import datetime
 
 from rocketpy import Environment, Flight, Function, MonteCarlo, Rocket, SolidMotor
-import siphon 
 from rocketpy.stochastic import (
     StochasticEnvironment,
     StochasticFlight,
