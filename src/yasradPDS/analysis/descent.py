@@ -74,10 +74,12 @@ def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -
     """
     Returns a rocketpy flight object for the system dropped from apogee containing all descent kinematics data.
 
-    Note: RocketPy does consider the coriolis effect so a slight Eastward drift is expected
+    Note: RocketPy does consider the coriolis effect so a slight Eastward drift is expected if winds are zero
     """
     #Get Mass of rocket
     mass = 0
+    
+    #Makes the assumption that the first chute of any deployment system opens at apogee
     apogee = sys.get(0, "deploy_altitude")
 
     for i in range(1):
@@ -102,11 +104,11 @@ def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -
         cd_s = sys.get(i, "CD") * sys.get(i, "area")
         trigger_altitude = sys.get(i, "deploy_altitude")
         fill_time = sys.get(i, "fill_time")
+
         rocket.add_parachute(name=chute_name, cd_s = cd_s, trigger=trigger_altitude, radius=radius, lag= fill_time)
 
     # env : Environment = standard(launch_site=site, date=date)  # standard() only takes the site, use forecast for launch site and date
     env : Environment = standard(site)
-
     #initial_solution for Flight simulation, we simulate the rocket as if it is not in motion at apogee. Everything 
     initial_state : list = [
     0, #Initial Time
@@ -127,6 +129,4 @@ def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -
     )
     return descent
 
-
-# sampleSystem = System()
 
