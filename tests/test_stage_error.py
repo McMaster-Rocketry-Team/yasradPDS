@@ -22,19 +22,19 @@ def error(s: dict) -> str:
 
 
 def test_both_diameters_pass():
-    assert stage_error(stage("drogue")) is None
-
-
-def test_no_diameters_pass():
     assert stage_error(stage("main")) is None
 
 
+def test_no_diameters_pass():
+    assert stage_error(stage("drogue")) is None
+
+
 def test_only_one_diameter_fails():
-    s = stage("drogue")
+    s = stage("main")
     del s["spill_hole_diameter"]
     assert "Fill in both" in error(s)
 
-    s = stage("main")
+    s = stage("drogue")
     s["main_diameter"] = 2.0
     assert "Fill in both" in error(s)
 
