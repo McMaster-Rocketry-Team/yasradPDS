@@ -50,16 +50,19 @@ def descent_analysis(sys : System, site : LaunchSite, date : datetime):
     #Plotting the alt, v, and a vertically stacked
     fig, z = plt.subplots(3, 1)
     
+
+    
     z[0].set_title("Altitude after apogee until impact")
     z[0].set_ylabel("Altitude ASL (m)")
     z[0].set_xlabel("Time After Apogee (s)")
     z[0].plot(timeAltitude[:, 0], timeAltitude[:, 1])
+    z[1].axhline(site.elevation, color="red", linewidth=0.8, linestyle="--")  # 0 m/s reference (apogee)
 
     z[1].set_title("Vertical velocity after apogee until impact")
-    z[1].set_ylabel("Z - Velocity (m/s)")
+    z[1].set_ylabel("Z - Velocity (m/s, down +ve)")
     z[1].set_xlabel("Time After Apogee (s)")
-    z[1].plot(timeVelocity[:, 0], timeVelocity[:, 1])
-    z[1].yaxis.set_inverted(True)
+    z[1].plot(timeVelocity[:, 0], -timeVelocity[:, 1])  # negate vz -> downward reads positive
+    z[1].axhline(0, color="red", linewidth=0.8, linestyle="--")  # 0 m/s reference (apogee)
 
     z[2].set_title("Vertical acceleration after apogee until impact")
     z[2].set_ylabel("Z - Acceleration (m/s^2)")
