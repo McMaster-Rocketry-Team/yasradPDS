@@ -10,7 +10,7 @@ from click.testing import CliRunner
 
 from yasradPDS.interface.cli import cli
 
-SAMPLE = Path(__file__).parents[1] / "system.json"
+SAMPLE = Path(__file__).parents[1] / "src/yasradPDS/config/system.json"
 
 
 def run_create_system(inputs: dict | str):

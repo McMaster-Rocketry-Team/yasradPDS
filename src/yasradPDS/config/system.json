@@ -1,0 +1,65 @@
+{
+  "name": "",
+  "drogue": {
+    "geometry": "semi_elipsoid",
+    "gore_count": 6,
+    "fabric_density": 0.066,
+    "deploy_altitude": 15272.0,
+    "deploy_velocity": 5.0,
+    "target_velocity": 25.0,
+    "mass_upper": 29.0,
+    "mass_lower": 1.0,
+    "max_shock_upper": 8000.0,
+    "max_shock_lower": 8000.0,
+    "cord_upper": {
+      "length": 0.1,
+      "density": 0.1,
+      "break_strength": 0.1,
+      "max_epsilon": 0.1
+    },
+    "cord_lower": {
+      "length": 0.1,
+      "density": 0.1,
+      "break_strength": 0.1,
+      "max_epsilon": 0.1
+    },
+    "shroud": {
+      "density": 0.1,
+      "break_strength": 0.1,
+      "max_epsilon": 0.1
+    },
+    "is_existing": false
+  },
+  "main": {
+    "geometry": "semi_elipsoid",
+    "gore_count": 12,
+    "fabric_density": 0.066,
+    "deploy_altitude": 1500.0,
+    "deploy_velocity": 25.0,
+    "target_velocity": 6.0,
+    "mass_upper": 29.0,
+    "mass_lower": 1.0,
+    "max_shock_upper": 8000.0,
+    "max_shock_lower": 8000.0,
+    "main_diameter": 10.0,
+    "spill_hole_diameter": 1.76,
+    "cord_upper": {
+      "length": 0.1,
+      "density": 0.1,
+      "break_strength": 0.1,
+      "max_epsilon": 0.1
+    },
+    "cord_lower": {
+      "length": 0.1,
+      "density": 0.1,
+      "break_strength": 0.1,
+      "max_epsilon": 0.1
+    },
+    "shroud": {
+      "density": 0.1,
+      "break_strength": 0.1,
+      "max_epsilon": 0.1
+    },
+    "is_existing": true
+  }
+}

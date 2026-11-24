@@ -81,7 +81,11 @@ def custom_wind(site: LaunchSite, wind_u: WindProfile = 0, wind_v: WindProfile =
     return env
 
 def forecast(site: LaunchSite, date: datetime, source: str = "GFS") -> Environment:
-    """Real forecast. Needs network; date must be within ~1-2 weeks of today."""
+    """
+    Real forecast. Needs network; date must be within ~1-2 weeks of today.
+    NOTE: GFS only has forecast data every 3 hours (00, 03, 06,..., 21:00 UTC). 
+          RocketPy will choose the nearest 3-hour slot.
+    """
     env = _base(site, date)
     env.set_atmospheric_model(type="Forecast", file=source)
     return env

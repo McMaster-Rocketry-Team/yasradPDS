@@ -1,7 +1,8 @@
 {
-  "name": "Test Site",
+  "name": "Timmins",
   "latitude": 47.98,
   "longitude": -81.85,
   "elevation": 300.0,
-  "timezone": "America/Toronto"
+  "timezone": "UTC",
+  "atmosphere": "forecast"
 }

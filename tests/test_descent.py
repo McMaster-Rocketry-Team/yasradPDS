@@ -11,7 +11,7 @@ from click.testing import CliRunner
 
 from yasradPDS.interface.cli import cli
 
-ROOT = Path(__file__).parents[1]
+ROOT = Path(__file__).parents[1] / "src/yasradPDS/config"
 
 
 def test_descent_exits_successfully():

@@ -12,7 +12,10 @@ def cli():
     """SRAD Parachute Design System."""
     pass
 
-DEFAULT_CONFIG = "system.json" # system inputs written by `config`, read by solve/analysis/export
+from pathlib import Path
+CONFIG_DIR = Path(__file__).parents[1] / "config" # absolute so commands work from any folder
+DEFAULT_CONFIG = str(CONFIG_DIR / "system.json") # system inputs written by `config`, read by solve/analysis/export
+DEFAULT_SITE = str(CONFIG_DIR / "site.json") # launch site written by `site`, read by analysis/export
 
 # Dual deploy Config
 @cli.command()
@@ -24,8 +27,6 @@ def config():
         click.echo("No changes made.")
         return
     click.echo("Inputs saved.")
-
-DEFAULT_SITE = "site.json" # launch site written by `site`, read by analysis/export
 
 # Shared loaders: turn bad files into a one-line click error instead of a traceback
 def _load_json(path):
@@ -67,10 +68,14 @@ def create_system(path, show):
         click.echo(system)
 
 def _load_site(path):
-    """Returns the LaunchSite saved by `site`."""
+    """Returns (LaunchSite, atmosphere, date) saved by `site`. Older site files without weather keys load as standard/now."""
+    from datetime import datetime
     from yasradPDS.utils.atmosphere import LaunchSite
+    data = _load_json(path)
+    atmosphere = data.pop("atmosphere", "standard")
+    date = data.pop("date", None)
     try:
-        return LaunchSite.from_dict(_load_json(path))
+        return LaunchSite.from_dict(data), atmosphere, datetime.fromisoformat(date) if date else datetime.now() # if date is not inputted, then default date is when analysis or export is ran
     except Exception as e: # ValueError, TypeError, or pytz's UnknownTimeZoneError
         raise click.ClickException(f"{path}: {e}")
 
@@ -81,19 +86,26 @@ def _load_site(path):
 @click.option("--longitude", required = True, type = float, help = "deg, + east")
 @click.option("--elevation", required = True, type = float, help = "m ASL")
 @click.option("--timezone", default = "UTC", show_default = True)
+@click.option("--atmosphere", type = click.Choice(["standard", "forecast"]), default = "standard", show_default = True, help = "forecast pulls GFS weather (needs internet)")
+@click.option("--date", type = click.DateTime(["%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%dT%H:%M"]), default = None, help = "Launch date/time in the site's timezone, for forecast (default: time of the run). Must be within ~1-2 weeks.")
 @click.option("-o", "path", default = DEFAULT_SITE, show_default = True, type = click.Path(dir_okay = False), help = "Where to save the site")
-def site(name, latitude, longitude, elevation, timezone, path):
-    """Save a launch site (location and ground elevation) for analysis and export."""
+def site(name, latitude, longitude, elevation, timezone, atmosphere, date, path):
+    """Save a launch site (location, ground elevation and weather model) for analysis and export."""
     import json
     from dataclasses import asdict
     from yasradPDS.utils.atmosphere import LaunchSite
+    if date and atmosphere != "forecast":
+        raise click.UsageError("--date only applies with --atmosphere forecast")
     try:
         launch_site = LaunchSite(name, latitude, longitude, elevation, timezone) # validates lat/lon/elevation/timezone
     except Exception as e: # ValueError, or pytz's UnknownTimeZoneError
         raise click.ClickException(f"Invalid launch site: {e}")
+    data = asdict(launch_site) | {"atmosphere": atmosphere}
+    if date:
+        data["date"] = date.isoformat() # Date format for site.json
     with open(path, "w") as f:
-        json.dump(asdict(launch_site), f, indent = 2)
-    click.echo(f"Saved launch site {name!r} to {path}")
+        json.dump(data, f, indent = 2)
+    click.echo(f"Saved launch site {name!r} ({atmosphere} atmosphere) to {path}")
 
 # Run analyses (plots only; use `export` to save results)
 @cli.command()
@@ -102,12 +114,11 @@ def site(name, latitude, longitude, elevation, timezone, path):
 @click.option("-s", "site_path", default = DEFAULT_SITE, show_default = True, type = click.Path(exists = True, dir_okay = False), help = "Launch site saved by site")
 def analysis(run_type, path, site_path):
     """Run an analysis on the system at the launch site and plot the results."""
-    from datetime import datetime
     _, system = _load_system(path)
-    # date only matters for forecast weather; descent currently uses the standard atmosphere
     if run_type == "descent":
         from yasradPDS.analysis.descent import descent_analysis
-        descent_analysis(system, _load_site(site_path), datetime.now())
+        launch_site, atmosphere, date = _load_site(site_path)
+        descent_analysis(system, launch_site, date, atmosphere)
     else:
         raise click.ClickException("montecarlo is not implemented yet")
 
@@ -126,11 +137,11 @@ def export(format, path, system_path, site_path):
     _, system = _load_system(system_path)
 
     if format == "csv": # shortcut: csv is descent data only; add an analysis-type argument when montecarlo exports exist
-        from datetime import datetime
         from yasradPDS.analysis.descent import get_descent_flight_3_DOF
         from yasradPDS.export.csv_data import descent_csv
         # re-runs the descent without plotting; nothing is cached from `analysis`
-        descent_csv(get_descent_flight_3_DOF(system, _load_site(site_path), datetime.now()), path)
+        launch_site, atmosphere, date = _load_site(site_path)
+        descent_csv(get_descent_flight_3_DOF(system, launch_site, date, atmosphere), path)
         click.echo(f"Saved descent data to {path}")
     elif format == "dxf":
         from yasradPDS.export.dxf_template import export_dxf

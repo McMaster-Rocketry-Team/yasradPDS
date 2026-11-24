@@ -32,7 +32,7 @@ yasradPDS config
 
 yasradPDS create-system [-i FILE]
     Reads a saved .json file and builds a dual deploy system from it.
-    -i FILE   inputs file to read (default: system.json in the current folder)
+    -i FILE   inputs file to read (default: src/yasradPDS/config/system.json)
     --show    print every stage's values after building, including the
               solved unknowns (None means not solved yet)
     Prints "Created system '<name>' with 2 stages", or "Error: ..." explaining
