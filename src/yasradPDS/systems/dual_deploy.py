@@ -68,7 +68,7 @@ class DualDeploySystem(System):
         self._set_area(self._drogue, self._main.deploy_velocity, self._main.deploy_altitude)
         self._drogue.gore_outline = self._drogue._geometry.getDXFpoints(self._drogue.gore_count,
                                                                         self._drogue.main_diameter,
-                                                                        0.707*self._drogue.main_diameter,
+                                                                        0.707*self._drogue.main_diameter/2,
                                                                         self._drogue.spill_hole_diameter)
 
     def _set_area(self, stage: Stage, velocity: float, altitude: float) -> None:
