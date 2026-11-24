@@ -13,6 +13,7 @@ from tkinter import filedialog, messagebox, ttk
 
 import yasradPDS.geometries # importing registers every geometry module
 from yasradPDS.geometries.geometry import _REGISTRY
+from yasradPDS.interface.cli import CONFIG_DIR
 
 FONT = 'Calibri'
 FONT_SIZE = 10
@@ -258,7 +259,7 @@ def prompt_inputs() -> dict | None:
         values = valid_inputs()
         if values is None:
             return
-        path = filedialog.asksaveasfilename(initialfile="system.json", defaultextension=".json",
+        path = filedialog.asksaveasfilename(initialdir=CONFIG_DIR, initialfile="system.json", defaultextension=".json",
                                             filetypes=[("JSON", "*.json")])
         if not path:
             return # cancelled, keep the window open
@@ -273,7 +274,7 @@ def prompt_inputs() -> dict | None:
         root.destroy() # close window after saving
 
     def import_json():
-        path = filedialog.askopenfilename(filetypes=[("JSON", "*.json")])
+        path = filedialog.askopenfilename(initialdir=CONFIG_DIR, filetypes=[("JSON", "*.json")])
         if not path:
             return
         try:

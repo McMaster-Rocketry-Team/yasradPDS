@@ -74,7 +74,7 @@ yasradPDS export {csv|pdf|dxf} -o FILE     # write data or gore templates (not i
 `config` opens the dual-deploy input window, with one tab per stage.
 **Save** checks every field, asks where to write the JSON file, then
 closes the window. **Import** loads a saved JSON file back into the
-fields. `create-system` reads `system.json` in the current folder
+fields. `create-system` reads `src/yasradPDS/config/system.json`
 unless `-i` points it to another file.
 
 Every command runs on its own, so the JSON file is what carries the

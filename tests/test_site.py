@@ -11,7 +11,7 @@ from click.testing import CliRunner
 from yasradPDS.interface.cli import cli
 from yasradPDS.utils.atmosphere import LaunchSite
 
-SITE = json.loads((Path(__file__).parents[1] / "site.json").read_text())
+SITE = json.loads((Path(__file__).parents[1] / "src/yasradPDS/config/site.json").read_text())
 ARGS = ["--name", SITE["name"], "--latitude", str(SITE["latitude"]), "--longitude", str(SITE["longitude"]),
         "--elevation", str(SITE["elevation"]), "--timezone", SITE["timezone"]]
 
@@ -26,7 +26,9 @@ def run_site(args):
 def test_site_round_trips():
     result, saved = run_site(ARGS)
     assert result.exit_code == 0, result.output
-    assert LaunchSite.from_dict(saved) == LaunchSite.from_dict(SITE)
+    location = lambda d: LaunchSite.from_dict({k: v for k, v in d.items() if k not in ("atmosphere", "date")})
+    assert location(saved) == location(SITE)
+    assert saved["atmosphere"] == "standard" # ARGS doesn't pass --atmosphere
 
 
 def test_bad_site_not_saved():

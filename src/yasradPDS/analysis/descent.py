@@ -28,17 +28,19 @@ APOGEE = 10000
 
 
 
-def descent_analysis(sys : System, site : LaunchSite, date : datetime):
+def descent_analysis(sys : System, site : LaunchSite, date : datetime, atmosphere : str = "standard"):
     """
     Returns a rocketpy flight object for the system dropped from apogee containing all descent kinematics data.
     
     Note: RocketPy does consider the coriolis effect so a slight horizontal drift is expected
-
+    
+    Default atmosphere is "standard".
+    
     CSV export lives in export/csv_data.py (run via `export csv` in the CLI).
     """
 
     
-    descent = get_descent_flight_3_DOF(sys=sys, site=site, date=date)
+    descent = get_descent_flight_3_DOF(sys=sys, site=site, date=date, atmosphere=atmosphere)
     descent.plots.trajectory_3d()
 
 
@@ -56,7 +58,7 @@ def descent_analysis(sys : System, site : LaunchSite, date : datetime):
     z[0].set_ylabel("Altitude ASL (m)")
     z[0].set_xlabel("Time After Apogee (s)")
     z[0].plot(timeAltitude[:, 0], timeAltitude[:, 1])
-    z[1].axhline(site.elevation, color="red", linewidth=0.8, linestyle="--")  # 0 m/s reference (apogee)
+    z[0].axhline(site.elevation, color="red", linewidth=0.8, linestyle="--")  # 0 m/s reference (apogee)
 
     z[1].set_title("Vertical velocity after apogee until impact")
     z[1].set_ylabel("Z - Velocity (m/s, down +ve)")
@@ -73,7 +75,7 @@ def descent_analysis(sys : System, site : LaunchSite, date : datetime):
 
 
 
-def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -> Flight:
+def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime, atmosphere : str = "standard") -> Flight:
     """
     Returns a rocketpy flight object for the system dropped from apogee containing all descent kinematics data.
 
@@ -110,8 +112,7 @@ def get_descent_flight_3_DOF(sys : System, site : LaunchSite, date : datetime) -
 
         rocket.add_parachute(name=chute_name, cd_s = cd_s, trigger=trigger_altitude, radius=radius, lag= fill_time)
 
-    # env : Environment = standard(launch_site=site, date=date)  # standard() only takes the site, use forecast for launch site and date
-    env : Environment = standard(site)
+    env : Environment = forecast(site, date) if atmosphere == "forecast" else standard(site)
     #initial_solution for Flight simulation, we simulate the rocket as if it is not in motion at apogee. Everything 
     initial_state : list = [
     0, #Initial Time
