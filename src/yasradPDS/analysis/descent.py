@@ -56,7 +56,7 @@ def descent_analysis(sys : System, site : LaunchSite, date : datetime):
     z[0].set_ylabel("Altitude ASL (m)")
     z[0].set_xlabel("Time After Apogee (s)")
     z[0].plot(timeAltitude[:, 0], timeAltitude[:, 1])
-    z[1].axhline(site.elevation, color="red", linewidth=0.8, linestyle="--")  # 0 m/s reference (apogee)
+    z[0].axhline(site.elevation, color="red", linewidth=0.8, linestyle="--")  # 0 m/s reference (apogee)
 
     z[1].set_title("Vertical velocity after apogee until impact")
     z[1].set_ylabel("Z - Velocity (m/s, down +ve)")
