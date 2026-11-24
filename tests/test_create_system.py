@@ -33,10 +33,11 @@ def assert_clean_error(result, message: str):
 
 
 def test_sample_builds():
-    result = run_create_system(sample())
+    inputs = sample()
+    result = run_create_system(inputs)
     print(result.output)
     assert result.exit_code == 0, result.output
-    assert "Created system 'Test Dual Deploy' with 2 stages" in result.output
+    assert f"Created system {inputs['name']!r} with 2 stages" in result.output
     assert "[drogue]" in result.output and "[main]" in result.output
 
 
