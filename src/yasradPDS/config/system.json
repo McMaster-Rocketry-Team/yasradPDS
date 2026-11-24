@@ -1,66 +1,65 @@
 {
-  "name": "Test Dual Deploy",
+  "name": "",
   "drogue": {
     "geometry": "semi_elipsoid",
     "gore_count": 6,
-    "fabric_density": 0.04,
-    "deploy_altitude": 9842.5,
-    "deploy_velocity": 20.0,
+    "fabric_density": 0.066,
+    "deploy_altitude": 15272.0,
+    "deploy_velocity": 5.0,
     "target_velocity": 25.0,
-    "mass_upper": 10.0,
-    "mass_lower": 12.0,
+    "mass_upper": 29.0,
+    "mass_lower": 1.0,
     "max_shock_upper": 8000.0,
     "max_shock_lower": 8000.0,
-    "main_diameter": 2.0,
-    "spill_hole_diameter": 0.4,
     "cord_upper": {
-      "length": 16.4,
-      "density": 0.03,
-      "break_strength": 6000.0,
-      "max_epsilon": 0.05
+      "length": 0.1,
+      "density": 0.1,
+      "break_strength": 0.1,
+      "max_epsilon": 0.1
     },
     "cord_lower": {
-      "length": 16.4,
-      "density": 0.03,
-      "break_strength": 6000.0,
-      "max_epsilon": 0.05
+      "length": 0.1,
+      "density": 0.1,
+      "break_strength": 0.1,
+      "max_epsilon": 0.1
     },
     "shroud": {
-      "length": 3.0,
-      "density": 0.006,
-      "break_strength": 2400.0,
-      "max_epsilon": 0.3
+      "density": 0.1,
+      "break_strength": 0.1,
+      "max_epsilon": 0.1
     },
-    "is_existing": true
+    "is_existing": false
   },
   "main": {
     "geometry": "semi_elipsoid",
     "gore_count": 12,
-    "fabric_density": 0.04,
-    "deploy_altitude": 1476.4,
+    "fabric_density": 0.066,
+    "deploy_altitude": 1500.0,
     "deploy_velocity": 25.0,
     "target_velocity": 6.0,
-    "mass_upper": 10.0,
-    "mass_lower": 12.0,
+    "mass_upper": 29.0,
+    "mass_lower": 1.0,
     "max_shock_upper": 8000.0,
     "max_shock_lower": 8000.0,
+    "main_diameter": 10.0,
+    "spill_hole_diameter": 1.76,
     "cord_upper": {
-      "length": 26.2,
-      "density": 0.03,
-      "break_strength": 6000.0,
-      "max_epsilon": 0.05
+      "length": 0.1,
+      "density": 0.1,
+      "break_strength": 0.1,
+      "max_epsilon": 0.1
     },
     "cord_lower": {
-      "length": 26.2,
-      "density": 0.03,
-      "break_strength": 6000.0,
-      "max_epsilon": 0.05
+      "length": 0.1,
+      "density": 0.1,
+      "break_strength": 0.1,
+      "max_epsilon": 0.1
     },
     "shroud": {
-      "density": 0.006,
-      "break_strength": 2400.0,
-      "max_epsilon": 0.3
+      "density": 0.1,
+      "break_strength": 0.1,
+      "max_epsilon": 0.1
     },
-    "is_existing": false
+    "is_existing": true
   }
 }
